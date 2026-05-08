@@ -45,7 +45,7 @@ const PROJECTS = [
     desc: 'Educational platform with course creation, video streaming, quizzes, progress tracking, and certificate generation.',
     gradient: 'from-indigo-900/60 via-blue-900/40 to-[#0F1525]',
     tags: ['React','Node.js','AWS S3','MongoDB','Stripe'],
-    github: 'https://github.com', demo: 'https://example.com',
+    github: 'https://github.com', demo: 'https://lms-platform-git-main-tibeb93s-projects.vercel.app/',
   },
 ]
 
