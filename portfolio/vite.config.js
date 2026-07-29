@@ -1,41 +1,33 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import path from 'path'
 
 export default defineConfig({
   plugins: [react()],
 
-  build: {
-    // Raise chunk warning limit slightly
-    chunkSizeWarningLimit: 600,
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
 
+  build: {
+    chunkSizeWarningLimit: 700,
     rollupOptions: {
       output: {
-        // Split vendor chunks so browser can cache them separately
-        manualChunks: {
-          'react-vendor':   ['react', 'react-dom'],
-          'motion-vendor':  ['framer-motion'],
-          'icons-fa':       ['react-icons/fa'],
-          'icons-si':       ['react-icons/si'],
-          'icons-hi':       ['react-icons/hi'],
+        manualChunks(id) {
+          if (id.includes('node_modules/react-dom') || id.includes('node_modules/react/'))
+            return 'react-vendor'
+          if (id.includes('node_modules/framer-motion'))  return 'motion-vendor'
+          if (id.includes('node_modules/@tanstack'))      return 'query-vendor'
+          if (id.includes('react-icons/fa'))              return 'icons-fa'
+          if (id.includes('react-icons/si'))              return 'icons-si'
+          if (id.includes('react-icons/hi'))              return 'icons-hi'
         },
       },
     },
-
-    // Minify with esbuild (default, fastest)
-    minify: 'esbuild',
-
-    // Generate source maps only in dev
     sourcemap: false,
-
-    // Inline assets smaller than 4kb
     assetsInlineLimit: 4096,
-
-    // Target modern browsers — smaller output
     target: 'es2020',
-  },
-
-  // Pre-bundle deps for faster cold starts in dev
-  optimizeDeps: {
-    include: ['react', 'react-dom', 'framer-motion'],
   },
 })

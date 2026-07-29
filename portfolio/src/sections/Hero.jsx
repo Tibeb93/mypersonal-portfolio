@@ -1,10 +1,11 @@
 import { motion } from 'framer-motion'
 import { FaReact, FaNodeJs, FaGithub, FaTelegram, FaLinkedin } from 'react-icons/fa'
 import { SiMongodb, SiJavascript, SiTailwindcss, SiPython } from 'react-icons/si'
-import { HiArrowDown } from 'react-icons/hi'
+import { HiArrowDown, HiDownload } from 'react-icons/hi'
 import Button from '../components/Button'
 import { staggerContainer, staggerItem } from '../utils/animations'
-import profileImage from '../assets/profileImage.jpg'
+import useProfile from '../hooks/useProfile'
+import profileImageFallback from '../assets/profileImage.jpg'
 
 const FLOATERS = [
   { Icon: FaReact,       color: '#61DAFB', label: 'React',    cls: 'top-[18%] left-[6%]',    delay: 0,   dur: 5   },
@@ -15,14 +16,38 @@ const FLOATERS = [
   { Icon: SiPython,      color: '#3776AB', label: 'Python',   cls: 'top-[48%] right-[5%]',   delay: 2.5, dur: 7.5 },
 ]
 
-const SOCIALS = [
+const ICON_MAP = { FaGithub, FaTelegram, FaLinkedin }
+
+const FALLBACK_SOCIALS = [
   { Icon: FaGithub,   href: 'https://github.com/Tibeb93',  label: 'GitHub'   },
   { Icon: FaTelegram, href: 'https://t.me/tibeb93',         label: 'Telegram' },
   { Icon: FaLinkedin, href: 'https://linkedin.com',         label: 'LinkedIn' },
 ]
 
 export default function Hero() {
-  const go = id => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+  const { profile } = useProfile()
+  const go = (id) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+
+  const name       = profile?.name       || 'Gebremeskel Kiflemeskel'
+  const title      = profile?.title      || 'Full Stack Web Developer'
+  const shortBio   = profile?.shortBio   || "Computer Science student and Full Stack Developer from Ethiopia building modern web experiences."
+  const available  = profile?.available  ?? true
+  const availNote  = profile?.availabilityNote || 'Available for opportunities'
+  const photoSrc   = profile?.profileImage    || profileImageFallback
+  const resumeUrl  = profile?.resumeUrl       || '/Gebremeskel_Kiflemeskel_CV.pdf'
+
+  // Map API socials → icon components, fall back to static list
+  const socials = profile?.socials?.length
+    ? profile.socials.map((s) => ({
+        Icon:  ICON_MAP[s.icon] || FaGithub,
+        href:  s.url,
+        label: s.platform,
+      }))
+    : FALLBACK_SOCIALS
+
+  // Split name for styled display
+  const [firstName, ...rest] = name.split(' ')
+  const lastName = rest.join(' ')
 
   return (
     <section
@@ -40,8 +65,6 @@ export default function Hero() {
           backgroundSize: '60px 60px',
         }}
       />
-
-      {/* Radial glow */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(139,92,246,0.12),transparent_70%)]" />
 
       {/* Floating tech icons — desktop only */}
@@ -59,41 +82,37 @@ export default function Hero() {
         </motion.div>
       ))}
 
-      {/* Main content */}
       <motion.div
         className="container-custom relative z-10 py-16 flex flex-col items-center text-center"
         variants={staggerContainer}
         initial="hidden"
         animate="visible"
       >
-        {/* Available badge */}
-        <motion.div variants={staggerItem} className="mb-8">
-          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold
-            tracking-wider uppercase bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            Available for opportunities
-          </span>
-        </motion.div>
+        {/* Availability badge */}
+        {available && (
+          <motion.div variants={staggerItem} className="mb-8">
+            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold
+              tracking-wider uppercase bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              {availNote}
+            </span>
+          </motion.div>
+        )}
 
-        {/* ── Profile image ── */}
+        {/* Profile image */}
         <motion.div variants={staggerItem} className="mb-8">
           <div className="relative inline-block">
-            {/* Animated gradient glow ring */}
             <div className="absolute -inset-[3px] rounded-full bg-gradient-to-r from-violet-600 via-pink-500 to-orange-500
               blur-sm opacity-80 animate-pulse" />
-
-            {/* Spinning dashed orbit */}
             <div
               className="absolute -inset-[14px] rounded-full border border-dashed border-violet-500/30"
               style={{ animation: 'spin-slow 20s linear infinite' }}
             />
-
-            {/* Photo — eager + high priority so it paints with first frame */}
             <div className="relative w-36 h-36 sm:w-44 sm:h-44 md:w-52 md:h-52 rounded-full overflow-hidden
               border-2 border-white/10 shadow-[0_0_40px_rgba(139,92,246,0.35)]">
               <img
-                src={profileImage}
-                alt="Gebremeskel Kiflemeskel"
+                src={photoSrc}
+                alt={name}
                 width={208}
                 height={208}
                 loading="eager"
@@ -102,8 +121,6 @@ export default function Hero() {
                 className="w-full h-full object-cover object-top"
               />
             </div>
-
-            {/* Small tech badge pinned bottom-right */}
             <motion.div
               className="absolute -bottom-2 -right-2 w-10 h-10 rounded-xl
                 bg-gradient-to-br from-violet-600 to-pink-600
@@ -130,56 +147,51 @@ export default function Hero() {
           variants={staggerItem}
           className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-white leading-tight mb-4"
         >
-          <span
-            className="gradient-text"
-            style={{ textShadow: '0 0 40px rgba(139,92,246,0.35)' }}
-          >
-            Gebremeskel
+          <span className="gradient-text" style={{ textShadow: '0 0 40px rgba(139,92,246,0.35)' }}>
+            {firstName}
           </span>
           <br />
-          <span className="text-white">Keflemeskel</span>
+          <span className="text-white">{lastName}</span>
         </motion.h1>
 
-        {/* Role pill */}
+        {/* Title pill */}
         <motion.div variants={staggerItem} className="mb-6">
           <span className="inline-block px-5 py-2 rounded-full glass border border-violet-500/20
             text-violet-300 font-semibold text-base sm:text-lg tracking-wide">
-            Full Stack Web Developer
+            {title}
           </span>
         </motion.div>
 
-        {/* Description */}
+        {/* Short bio */}
         <motion.p
           variants={staggerItem}
           className="text-slate-400 text-sm sm:text-base lg:text-lg max-w-xl lg:max-w-2xl
             mx-auto leading-relaxed mb-10 px-2"
         >
-         Computer Science student and Full Stack Developer from{' '}
-          <span className="text-orange-400 font-medium">Ethiopia</span>  building modern web
-experiences that combine performance, scalability, and clean, user-centered design.
+          {shortBio}
         </motion.p>
 
         {/* CTA buttons */}
         <motion.div
           variants={staggerItem}
-          className="flex flex-col xs:flex-row items-center justify-center gap-3 sm:gap-4 mb-10 w-full px-4 sm:px-0"
+          className="flex flex-col xs:flex-row flex-wrap items-center justify-center gap-3 sm:gap-4 mb-10 w-full px-4 sm:px-0"
         >
-          <Button
-            variant="primary"
-            size="lg"
-            className="w-full xs:w-auto sm:w-auto"
-            onClick={() => go('contact')}
-          >
+          <Button variant="primary" size="lg" className="w-full xs:w-auto" onClick={() => go('contact')}>
             Connect With Me
           </Button>
-          <Button
-            variant="secondary"
-            size="lg"
-            className="w-full xs:w-auto sm:w-auto"
-            onClick={() => go('projects')}
-          >
+          <Button variant="secondary" size="lg" className="w-full xs:w-auto" onClick={() => go('projects')}>
             View Projects
           </Button>
+          <a
+            href={resumeUrl}
+            download
+            className="inline-flex items-center gap-2 px-8 py-4 text-base font-semibold rounded-xl
+              bg-transparent text-slate-300 border border-white/15 hover:border-violet-500/40
+              hover:text-white hover:bg-violet-500/5 transition-all duration-300 w-full xs:w-auto justify-center"
+          >
+            <HiDownload size={18} />
+            Resume
+          </a>
         </motion.div>
 
         {/* Social links */}
@@ -187,7 +199,7 @@ experiences that combine performance, scalability, and clean, user-centered desi
           variants={staggerItem}
           className="flex items-center justify-center gap-3 sm:gap-4 mb-14"
         >
-          {SOCIALS.map(({ Icon, href, label }) => (
+          {socials.map(({ Icon, href, label }) => (
             <motion.a
               key={label}
               href={href}
@@ -214,10 +226,7 @@ experiences that combine performance, scalability, and clean, user-centered desi
           aria-label="Scroll to services"
         >
           <span className="text-xs font-mono tracking-widest uppercase">Scroll</span>
-          <motion.div
-            animate={{ y: [0, 6, 0] }}
-            transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-          >
+          <motion.div animate={{ y: [0, 6, 0] }} transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}>
             <HiArrowDown size={18} />
           </motion.div>
         </motion.button>

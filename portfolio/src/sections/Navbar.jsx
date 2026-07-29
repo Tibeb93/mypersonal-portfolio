@@ -6,11 +6,12 @@ import ThemeToggle from '../components/ThemeToggle'
 import useScrollSpy from '../hooks/useScrollSpy'
 
 const LINKS = [
-  { label: 'Home',     id: 'home' },
-  { label: 'About',    id: 'about' },
-  { label: 'Services', id: 'services' },
+  { label: 'Home',     id: 'home'     },
+  { label: 'About',    id: 'about'    },
   { label: 'Projects', id: 'projects' },
-  { label: 'Contact',  id: 'contact' },
+  { label: 'Skills',   id: 'techstack'},
+  { label: 'Blog',     id: 'blog'     },
+  { label: 'Contact',  id: 'contact'  },
 ]
 
 function scrollTo(id) {
