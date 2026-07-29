@@ -78,6 +78,16 @@ app.use(morgan('dev', {
 }))
 
 // ── Health check ─────────────────────────────────────────────────────────────
+app.get('/', (req, res) => {
+  res.status(200).json({
+    success: true,
+    name: 'Portfolio CMS API',
+    version: '1.0.0',
+    status: 'running',
+    docs: '/health — server health | /api/* — all endpoints',
+  })
+})
+
 app.get('/health', (req, res) => {
   res.status(200).json({
     success: true,
