@@ -19,20 +19,22 @@ const TITLES = {
   '/account':      'Account Settings',
 }
 
+// Portfolio URL — local dev, or override with VITE_PORTFOLIO_URL for production
+const PORTFOLIO_URL = import.meta.env.VITE_PORTFOLIO_URL || 'http://localhost:5173'
+
 export default function Topbar({ onMenuClick }) {
   const { pathname } = useLocation()
   const { user }     = useAuthStore()
 
-  const title = TITLES[pathname] || 'Admin'
   const base  = pathname.split('/')[1]
-  const found = TITLES[`/${base}`]
+  const title = TITLES[`/${base}`] || TITLES[pathname] || 'Admin'
 
   return (
     <header className="h-16 bg-[#0F1525]/90 backdrop-blur-xl border-b border-white/[0.06]
       flex items-center justify-between px-4 sm:px-6 sticky top-0 z-20">
 
       <div className="flex items-center gap-3">
-        {/* Hamburger — mobile */}
+        {/* Hamburger — mobile only */}
         <button
           onClick={onMenuClick}
           className="lg:hidden p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
@@ -42,7 +44,7 @@ export default function Topbar({ onMenuClick }) {
         </button>
 
         <div>
-          <h1 className="text-base font-bold text-white">{found || title}</h1>
+          <h1 className="text-base font-bold text-white">{title}</h1>
           <p className="text-xs text-slate-500 hidden sm:block">
             {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
           </p>
@@ -50,11 +52,13 @@ export default function Topbar({ onMenuClick }) {
       </div>
 
       <div className="flex items-center gap-2">
-        {/* View live portfolio */}
+
+        {/* View Portfolio button — opens the public portfolio */}
         <a
-          href="http://localhost:5173"
+          href={PORTFOLIO_URL}
           target="_blank"
           rel="noopener noreferrer"
+          title={`Opens ${PORTFOLIO_URL} — make sure the portfolio server is running`}
           className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold
             text-slate-400 hover:text-white bg-white/[0.04] border border-white/[0.06]
             hover:border-violet-500/30 transition-all duration-200"
@@ -62,10 +66,13 @@ export default function Topbar({ onMenuClick }) {
           <HiExternalLink size={14} /> View Portfolio
         </a>
 
-        {/* Notifications placeholder */}
-        <button className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-400
-          hover:text-white bg-white/[0.04] border border-white/[0.06] hover:border-white/[0.12]
-          transition-all duration-200 relative">
+        {/* Notifications (placeholder) */}
+        <button
+          className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-400
+            hover:text-white bg-white/[0.04] border border-white/[0.06] hover:border-white/[0.12]
+            transition-all duration-200"
+          aria-label="Notifications"
+        >
           <HiBell size={16} />
         </button>
 
