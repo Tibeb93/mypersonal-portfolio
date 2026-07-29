@@ -19,8 +19,8 @@ const TITLES = {
   '/account':      'Account Settings',
 }
 
-// Portfolio URL — local dev, or override with VITE_PORTFOLIO_URL for production
-const PORTFOLIO_URL = import.meta.env.VITE_PORTFOLIO_URL || 'http://localhost:5173'
+// Portfolio URL — use env var if set, otherwise the live deployed URL
+const PORTFOLIO_URL = import.meta.env.VITE_PORTFOLIO_URL || 'https://mypersonal-portfolio-gm.vercel.app'
 
 export default function Topbar({ onMenuClick }) {
   const { pathname } = useLocation()
