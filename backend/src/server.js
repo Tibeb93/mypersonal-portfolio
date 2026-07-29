@@ -39,19 +39,29 @@ app.use(helmet({
 }))
 
 // CORS — allow frontend + admin origins
+// Support comma-separated list of origins in ADMIN_URL
+const parseOrigins = (val) =>
+  (val || '').split(',').map(s => s.trim()).filter(Boolean)
+
 const allowedOrigins = [
-  process.env.FRONTEND_URL || 'http://localhost:5173',
-  process.env.ADMIN_URL    || 'http://localhost:5174',
-].filter(Boolean)
+  ...(process.env.FRONTEND_URL ? parseOrigins(process.env.FRONTEND_URL) : ['http://localhost:5173']),
+  ...(process.env.ADMIN_URL    ? parseOrigins(process.env.ADMIN_URL)    : ['http://localhost:5174']),
+  // Always allow Vercel preview deployments for this project
+  'https://mypersonal-portfolio-lxjb.vercel.app',
+  'https://mypersonal-portfolio-1smv.vercel.app',
+  'https://mypersonal-portfolio-gm.vercel.app',
+]
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, Postman, server-to-server)
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true)
-    } else {
-      callback(new Error(`CORS: Origin ${origin} not allowed`))
-    }
+    // Allow requests with no origin (Postman, mobile, server-to-server)
+    if (!origin) return callback(null, true)
+    // Allow any Vercel preview URL for this project
+    if (origin.endsWith('.vercel.app')) return callback(null, true)
+    // Allow explicitly whitelisted origins
+    if (allowedOrigins.includes(origin)) return callback(null, true)
+    // Block everything else
+    callback(new Error(`CORS: Origin ${origin} not allowed`))
   },
   credentials: true, // Required for httpOnly cookies
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
