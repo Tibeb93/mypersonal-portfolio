@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import AdminLayout      from './components/AdminLayout.jsx'
 import ProtectedRoute   from './components/ProtectedRoute.jsx'
+import FaviconUpdater   from './components/FaviconUpdater.jsx'
 import Login            from './pages/Login.jsx'
 import Dashboard        from './pages/Dashboard.jsx'
 import ProfileManager   from './pages/ProfileManager.jsx'
@@ -19,7 +20,9 @@ import AccountSettings  from './pages/AccountSettings.jsx'
 
 export default function App() {
   return (
-    <Routes>
+    <>
+      <FaviconUpdater />
+      <Routes>
       {/* Public */}
       <Route path="/login" element={<Login />} />
 
@@ -49,5 +52,6 @@ export default function App() {
       {/* Catch all */}
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
+    </>
   )
 }

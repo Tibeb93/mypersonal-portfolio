@@ -40,15 +40,20 @@ export default function App() {
   const { settings }      = useSettings()
   const isLight = theme === 'light'
 
-  const siteTitle = settings?.seoTitle       || 'Gebremeskel Kiflemeskel | Full Stack Developer'
-  const siteDesc  = settings?.seoDescription || 'Full Stack Web Developer from Ethiopia building modern, performant web applications with React, Node.js, and MongoDB.'
-  const siteUrl   = 'https://mypersonal-portfolio-gm.vercel.app'
+  const siteTitle  = settings?.seoTitle       || 'Gebremeskel Kiflemeskel | Full Stack Developer'
+  const siteDesc   = settings?.seoDescription || 'Full Stack Web Developer from Ethiopia building modern, performant web applications with React, Node.js, and MongoDB.'
+  const siteUrl    = 'https://mypersonal-portfolio-gm.vercel.app'
+  const faviconUrl = settings?.favicon        || '/favicon.svg'
+  const siteTagline = settings?.siteTitle     || siteTitle
 
   return (
     <>
       {/* ── Global SEO & Open Graph ────────────────────────────────────────── */}
       <Helmet>
-        <title>{siteTitle}</title>
+        <title>{siteTagline}</title>
+        {/* Dynamic favicon from admin settings */}
+        <link rel="icon" href={faviconUrl} />
+        <link rel="shortcut icon" href={faviconUrl} />
         <meta name="description" content={siteDesc} />
         <meta name="keywords"    content={(settings?.seoKeywords ?? ['full stack developer','react','node.js','ethiopia']).join(', ')} />
         <meta name="author"      content="Gebremeskel Kiflemeskel" />
