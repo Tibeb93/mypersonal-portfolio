@@ -160,17 +160,17 @@ export default function Hero() {
           </div>
         </motion.div>
 
-        {/* ── Name — NO "Hello World" ── */}
+        {/* ── Name — centered, single visual block ── */}
         <motion.h1
           variants={staggerItem}
-          className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-tight mb-4"
+          className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-tight mb-4 text-center"
         >
-          {/* gradient-text always visible in both themes */}
+          {/* First name — gradient */}
           <span className="gradient-text" style={{ textShadow: '0 0 40px rgba(139,92,246,0.25)' }}>
             {firstName}
           </span>
-          {' '}
-          {/* Last name adapts to theme */}
+          <br />
+          {/* Last name — theme-aware, same line visual weight */}
           <span className={isLight ? 'text-slate-800' : 'text-white'}>
             {lastName}
           </span>
@@ -197,16 +197,16 @@ export default function Hero() {
           {shortBio}
         </motion.p>
 
-        {/* ── CTA buttons ── */}
+        {/* ── CTA buttons — centered, auto-width, 3 on one row desktop ── */}
         <motion.div
           variants={staggerItem}
-          className="flex flex-col xs:flex-row flex-wrap items-center justify-center gap-3 sm:gap-4 mb-10 w-full px-4 sm:px-0"
+          className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-10"
         >
-          <Button variant="primary" size="lg" className="w-full xs:w-auto" onClick={() => go('contact')}>
+          <Button variant="primary" size="lg" onClick={() => go('contact')}>
             Connect With Me
           </Button>
 
-          <Button variant="secondary" size="lg" className="w-full xs:w-auto" onClick={() => go('projects')}>
+          <Button variant="secondary" size="lg" onClick={() => go('projects')}>
             View Projects
           </Button>
 
@@ -216,7 +216,7 @@ export default function Hero() {
               href={resumeUrl}
               download
               className={`inline-flex items-center gap-2 px-8 py-4 text-base font-semibold rounded-xl
-                transition-all duration-300 w-full xs:w-auto justify-center cursor-pointer
+                transition-all duration-300 cursor-pointer whitespace-nowrap
                 ${isLight
                   ? 'bg-transparent text-slate-700 border border-slate-300 hover:border-violet-400 hover:text-violet-700 hover:bg-violet-50'
                   : 'bg-transparent text-slate-300 border border-white/15 hover:border-violet-500/40 hover:text-white hover:bg-violet-500/5'
