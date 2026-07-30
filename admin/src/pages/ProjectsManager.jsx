@@ -26,6 +26,7 @@ function ProjectForm({ initial, onSave, onCancel, loading, projectId, onThumbnai
       {projectId && (
         <ImageUpload label="Project Thumbnail" value={form.thumbnail}
           hint="Recommended: 1200×630px"
+          fieldName="thumbnail"
           onUpload={onThumbnailUpload} />
       )}
 

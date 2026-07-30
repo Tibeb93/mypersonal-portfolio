@@ -77,6 +77,7 @@ export default function ProfileManager() {
               value={form.profileImage}
               label="Profile Photo"
               hint="Recommended: 400×400px, JPG or PNG"
+              fieldName="image"
               onUpload={async (formData) => {
                 const res = await uploadImageMutation.mutateAsync(formData)
                 return res?.data?.url

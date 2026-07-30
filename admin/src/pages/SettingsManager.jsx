@@ -62,8 +62,8 @@ export default function SettingsManager() {
             <div><label className="label">Accent Color</label><div className="flex gap-2"><input type="color" value={form.accentColor||'#EC4899'} onChange={e=>set('accentColor',e.target.value)} className="w-10 h-10 rounded-lg border border-white/10 bg-transparent"/><input value={form.accentColor||''} onChange={e=>set('accentColor',e.target.value)} className="input flex-1"/></div></div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
-            <ImageUpload label="Logo" value={form.logo} hint="SVG or PNG, transparent background" onUpload={async(fd)=>{ const r=await uploadLogoMutation.mutateAsync(fd); return r?.data?.url }} uploading={uploadLogoMutation.isPending}/>
-            <ImageUpload label="Favicon" value={form.favicon} hint="32×32px or 64×64px" onUpload={async(fd)=>{ const r=await uploadFaviconMutation.mutateAsync(fd); return r?.data?.url }} uploading={uploadFaviconMutation.isPending}/>
+            <ImageUpload label="Logo" value={form.logo} hint="SVG or PNG, transparent background" fieldName="logo" onUpload={async(fd)=>{ const r=await uploadLogoMutation.mutateAsync(fd); return r?.data?.url }} uploading={uploadLogoMutation.isPending}/>
+            <ImageUpload label="Favicon" value={form.favicon} hint="32×32px or 64×64px" fieldName="favicon" onUpload={async(fd)=>{ const r=await uploadFaviconMutation.mutateAsync(fd); return r?.data?.url }} uploading={uploadFaviconMutation.isPending}/>
           </div>
         </Section>
 

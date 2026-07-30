@@ -18,7 +18,7 @@ function CertForm({ initial, onSave, onCancel, loading, certId, onImageUpload })
   const set = (k,v) => setForm(f=>({...f,[k]:v}))
   return (
     <div className="space-y-4">
-      {certId && <ImageUpload label="Certificate Image" value={form.image} onUpload={onImageUpload}/>}
+      {certId && <ImageUpload label="Certificate Image" value={form.image} fieldName="image" onUpload={onImageUpload}/>}
       <div><label className="label">Certificate Name *</label><input value={form.name} onChange={e=>set('name',e.target.value)} required className="input"/></div>
       <div className="grid grid-cols-2 gap-4">
         <div><label className="label">Organization *</label><input value={form.organization} onChange={e=>set('organization',e.target.value)} required className="input"/></div>

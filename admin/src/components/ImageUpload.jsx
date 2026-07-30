@@ -2,7 +2,16 @@ import { useRef, useState } from 'react'
 import { HiUpload, HiPhotograph, HiX } from 'react-icons/hi'
 import toast from 'react-hot-toast'
 
-export default function ImageUpload({ value, onChange, onUpload, uploading, accept = 'image/*', label = 'Image', hint }) {
+export default function ImageUpload({
+  value,
+  onChange,
+  onUpload,
+  uploading,
+  accept = 'image/*',
+  label = 'Image',
+  hint,
+  fieldName = 'image', // ← configurable field name for multipart form
+}) {
   const inputRef = useRef(null)
   const [preview, setPreview] = useState(value || null)
 
@@ -13,11 +22,11 @@ export default function ImageUpload({ value, onChange, onUpload, uploading, acce
     onChange?.(file)
     if (onUpload) {
       const form = new FormData()
-      form.append('image', file)
+      form.append(fieldName, file) // ← use the configured field name
       try {
         const url = await onUpload(form)
-        setPreview(url)
-        toast.success('Image uploaded')
+        if (url) setPreview(url)
+        toast.success('Uploaded successfully')
       } catch (err) {
         toast.error(err.message || 'Upload failed')
         setPreview(value || null)

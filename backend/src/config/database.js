@@ -2,9 +2,14 @@ import mongoose from 'mongoose'
 import { setServers, setDefaultResultOrder } from 'dns'
 import logger from '../utils/logger.js'
 
-// Force public DNS to bypass ISP blocks on MongoDB SRV records
-setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1'])
-setDefaultResultOrder('ipv4first')
+// ── DNS Fix ───────────────────────────────────────────────────────────────────
+// Node.js defaults to 127.0.0.1 which has no DNS server running.
+// Use the WiFi DNS server which is confirmed to work.
+// In production (Render) this is not needed — Render has full DNS.
+if (process.env.NODE_ENV !== 'production') {
+  setServers(['10.21.71.244']) // WiFi DNS — only one that works for SRV queries
+  setDefaultResultOrder('ipv4first')
+}
 
 const OPTIONS = {
   serverSelectionTimeoutMS: 30000,
@@ -17,7 +22,7 @@ const OPTIONS = {
 let isConnected = false
 
 const connectDB = async () => {
-  if (isConnected) return
+  const isProd = process.env.NODE_ENV === 'production'
 
   const attempt = async (count = 1) => {
     try {
@@ -26,10 +31,11 @@ const connectDB = async () => {
       logger.info(`MongoDB connected: ${mongoose.connection.host}`)
     } catch (err) {
       logger.error(`MongoDB attempt ${count} failed: ${err.message}`)
-      if (process.env.NODE_ENV === 'production') {
+      if (isProd) {
+        logger.error('Exiting for Render restart.')
         process.exit(1)
       }
-      logger.warn(`Retry in 10s... (attempt ${count})`)
+      logger.warn(`Retry in 10s...`)
       setTimeout(() => attempt(count + 1), 10000)
     }
   }
@@ -37,9 +43,9 @@ const connectDB = async () => {
   attempt()
 }
 
-mongoose.connection.on('connected',      () => { isConnected = true;  logger.info(`MongoDB connected: ${mongoose.connection.host}`) })
-mongoose.connection.on('disconnected',   () => { isConnected = false; logger.warn('MongoDB disconnected') })
-mongoose.connection.on('reconnected',    () => { isConnected = true;  logger.info(`MongoDB reconnected: ${mongoose.connection.host}`) })
-mongoose.connection.on('error',          (e) => logger.error(`MongoDB error: ${e.message}`))
+mongoose.connection.on('connected',    () => { isConnected = true;  logger.info(`MongoDB connected: ${mongoose.connection.host}`) })
+mongoose.connection.on('disconnected', () => { isConnected = false; logger.warn('MongoDB disconnected') })
+mongoose.connection.on('reconnected',  () => { isConnected = true;  logger.info(`MongoDB reconnected: ${mongoose.connection.host}`) })
+mongoose.connection.on('error',        (e) => logger.error(`MongoDB error: ${e.message}`))
 
 export default connectDB
