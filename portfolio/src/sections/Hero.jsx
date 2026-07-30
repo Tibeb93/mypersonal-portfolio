@@ -1,20 +1,11 @@
-import { motion } from 'framer-motion'
-import { FaReact, FaNodeJs, FaGithub, FaTelegram, FaLinkedin } from 'react-icons/fa'
-import { SiMongodb, SiJavascript, SiTailwindcss, SiPython } from 'react-icons/si'
-import { HiArrowDown, HiDownload } from 'react-icons/hi'
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { FaGithub, FaTelegram, FaLinkedin } from 'react-icons/fa'
+import { HiArrowDown, HiDownload, HiEye, HiExternalLink } from 'react-icons/hi'
 import Button from '../components/Button'
 import { staggerContainer, staggerItem } from '../utils/animations'
 import useProfile from '../hooks/useProfile'
 import profileImageFallback from '../assets/profileImage.jpg'
-
-const FLOATERS = [
-  { Icon: FaReact,       color: '#61DAFB', label: 'React',    cls: 'top-[18%] left-[6%]',    delay: 0,   dur: 5   },
-  { Icon: FaNodeJs,      color: '#68A063', label: 'Node.js',  cls: 'top-[22%] right-[7%]',   delay: 1,   dur: 6   },
-  { Icon: SiMongodb,     color: '#47A248', label: 'MongoDB',  cls: 'bottom-[28%] left-[5%]', delay: 2,   dur: 7   },
-  { Icon: SiJavascript,  color: '#F7DF1E', label: 'JS',       cls: 'bottom-[20%] right-[6%]',delay: 0.5, dur: 5.5 },
-  { Icon: SiTailwindcss, color: '#38BDF8', label: 'Tailwind', cls: 'top-[52%] left-[10%]',   delay: 1.5, dur: 6.5 },
-  { Icon: SiPython,      color: '#3776AB', label: 'Python',   cls: 'top-[48%] right-[5%]',   delay: 2.5, dur: 7.5 },
-]
 
 const ICON_MAP = { FaGithub, FaTelegram, FaLinkedin }
 
@@ -24,19 +15,89 @@ const FALLBACK_SOCIALS = [
   { Icon: FaLinkedin, href: 'https://linkedin.com',         label: 'LinkedIn' },
 ]
 
+// CV Preview Tooltip — shows a mini preview before downloading
+function CVPreviewTooltip({ resumeUrl, children }) {
+  const [show, setShow] = useState(false)
+
+  return (
+    <div
+      className="relative inline-flex"
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+    >
+      {children}
+
+      <AnimatePresence>
+        {show && (
+          <motion.div
+            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 z-50 w-56"
+            initial={{ opacity: 0, y: 8, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0,  scale: 1    }}
+            exit={{    opacity: 0, y: 8,  scale: 0.95 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+          >
+            {/* Arrow */}
+            <div className="absolute bottom-[-6px] left-1/2 -translate-x-1/2 w-3 h-3
+              bg-[#1A2238] border-r border-b border-violet-500/20 rotate-45" />
+
+            {/* Card */}
+            <div className="bg-[#1A2238] border border-violet-500/20 rounded-2xl overflow-hidden
+              shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
+              {/* PDF preview thumbnail area */}
+              <div className="h-32 bg-gradient-to-br from-violet-900/40 via-[#0F1525] to-pink-900/20
+                flex flex-col items-center justify-center gap-2 border-b border-white/[0.06]">
+                <div className="w-10 h-12 bg-white/10 rounded-lg flex items-center justify-center
+                  border border-white/10">
+                  <span className="text-xs font-bold text-white/50">PDF</span>
+                </div>
+                <span className="text-xs text-slate-400">Curriculum Vitae</span>
+              </div>
+
+              {/* Actions */}
+              <div className="p-3 flex gap-2">
+                <a
+                  href={resumeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg
+                    text-xs font-semibold text-slate-300 bg-white/5 hover:bg-white/10
+                    border border-white/8 transition-all duration-200"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <HiEye size={13} /> Preview
+                </a>
+                <a
+                  href={resumeUrl}
+                  download
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg
+                    text-xs font-semibold text-white
+                    bg-gradient-to-r from-violet-600 to-pink-600
+                    hover:opacity-90 transition-all duration-200"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <HiDownload size={13} /> Download
+                </a>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
 export default function Hero() {
   const { profile } = useProfile()
   const go = (id) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
 
-  const name       = profile?.name       || 'Gebremeskel Kiflemeskel'
-  const title      = profile?.title      || 'Full Stack Web Developer'
-  const shortBio   = profile?.shortBio   || "Computer Science student and Full Stack Developer from Ethiopia building modern web experiences."
-  const available  = profile?.available  ?? true
-  const availNote  = profile?.availabilityNote || 'Available for opportunities'
-  const photoSrc   = profile?.profileImage    || profileImageFallback
-  const resumeUrl  = profile?.resumeUrl       || '/Gebremeskel_Kiflemeskel_CV.pdf'
+  const name      = profile?.name       || 'Gebremeskel Kiflemeskel'
+  const title     = profile?.title      || 'Full Stack Web Developer'
+  const shortBio  = profile?.shortBio   || "Computer Science student and Full Stack Developer from Ethiopia building modern web experiences."
+  const available = profile?.available  ?? true
+  const availNote = profile?.availabilityNote || 'Available for opportunities'
+  const photoSrc  = profile?.profileImage    || profileImageFallback
+  const resumeUrl = profile?.resumeUrl       || '/Gebremeskel_Kiflemeskel_CV.pdf'
 
-  // Map API socials → icon components, fall back to static list
   const socials = profile?.socials?.length
     ? profile.socials.map((s) => ({
         Icon:  ICON_MAP[s.icon] || FaGithub,
@@ -45,7 +106,6 @@ export default function Hero() {
       }))
     : FALLBACK_SOCIALS
 
-  // Split name for styled display
   const [firstName, ...rest] = name.split(' ')
   const lastName = rest.join(' ')
 
@@ -54,7 +114,7 @@ export default function Hero() {
       id="home"
       className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20"
     >
-      {/* Grid background */}
+      {/* Subtle grid background */}
       <div
         className="absolute inset-0 opacity-[0.025]"
         style={{
@@ -65,23 +125,10 @@ export default function Hero() {
           backgroundSize: '60px 60px',
         }}
       />
+      {/* Radial glow */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(139,92,246,0.12),transparent_70%)]" />
 
-      {/* Floating tech icons — desktop only */}
-      {FLOATERS.map(({ Icon, color, label, cls, delay, dur }) => (
-        <motion.div
-          key={label}
-          className={`absolute hidden lg:flex items-center justify-center w-14 h-14 glass rounded-2xl ${cls}`}
-          initial={{ opacity: 0, scale: 0 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: delay + 0.8, type: 'spring' }}
-          style={{ animation: `float ${dur}s ease-in-out ${delay}s infinite` }}
-          aria-label={label}
-        >
-          <Icon size={28} color={color} />
-        </motion.div>
-      ))}
-
+      {/* Main content — no floating icons */}
       <motion.div
         className="container-custom relative z-10 py-16 flex flex-col items-center text-center"
         variants={staggerContainer}
@@ -91,23 +138,30 @@ export default function Hero() {
         {/* Availability badge */}
         {available && (
           <motion.div variants={staggerItem} className="mb-8">
-            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold
-              tracking-wider uppercase bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold
+              tracking-wider uppercase bg-emerald-500/10 border border-emerald-500/25 text-emerald-400
+              shadow-[0_0_20px_rgba(16,185,129,0.15)]">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
+              </span>
               {availNote}
             </span>
           </motion.div>
         )}
 
-        {/* Profile image */}
+        {/* Profile image — clean, no badge */}
         <motion.div variants={staggerItem} className="mb-8">
           <div className="relative inline-block">
+            {/* Gradient glow ring */}
             <div className="absolute -inset-[3px] rounded-full bg-gradient-to-r from-violet-600 via-pink-500 to-orange-500
               blur-sm opacity-80 animate-pulse" />
+            {/* Spinning orbit */}
             <div
               className="absolute -inset-[14px] rounded-full border border-dashed border-violet-500/30"
               style={{ animation: 'spin-slow 20s linear infinite' }}
             />
+            {/* Photo */}
             <div className="relative w-36 h-36 sm:w-44 sm:h-44 md:w-52 md:h-52 rounded-full overflow-hidden
               border-2 border-white/10 shadow-[0_0_40px_rgba(139,92,246,0.35)]">
               <img
@@ -121,16 +175,6 @@ export default function Hero() {
                 className="w-full h-full object-cover object-top"
               />
             </div>
-            <motion.div
-              className="absolute -bottom-2 -right-2 w-10 h-10 rounded-xl
-                bg-gradient-to-br from-violet-600 to-pink-600
-                flex items-center justify-center shadow-[0_0_16px_rgba(139,92,246,0.6)]
-                border border-white/10"
-              animate={{ rotate: [0, 10, -10, 0] }}
-              transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-            >
-              <FaReact size={18} color="#fff" />
-            </motion.div>
           </div>
         </motion.div>
 
@@ -179,19 +223,25 @@ export default function Hero() {
           <Button variant="primary" size="lg" className="w-full xs:w-auto" onClick={() => go('contact')}>
             Connect With Me
           </Button>
+
           <Button variant="secondary" size="lg" className="w-full xs:w-auto" onClick={() => go('projects')}>
             View Projects
           </Button>
-          <a
-            href={resumeUrl}
-            download
-            className="inline-flex items-center gap-2 px-8 py-4 text-base font-semibold rounded-xl
-              bg-transparent text-slate-300 border border-white/15 hover:border-violet-500/40
-              hover:text-white hover:bg-violet-500/5 transition-all duration-300 w-full xs:w-auto justify-center"
-          >
-            <HiDownload size={18} />
-            Resume
-          </a>
+
+          {/* CV Download with tooltip */}
+          <CVPreviewTooltip resumeUrl={resumeUrl}>
+            <a
+              href={resumeUrl}
+              download
+              className="inline-flex items-center gap-2 px-8 py-4 text-base font-semibold rounded-xl
+                bg-transparent text-slate-300 border border-white/15 hover:border-violet-500/40
+                hover:text-white hover:bg-violet-500/5 transition-all duration-300 w-full xs:w-auto justify-center
+                cursor-pointer"
+            >
+              <HiDownload size={18} />
+              Download CV
+            </a>
+          </CVPreviewTooltip>
         </motion.div>
 
         {/* Social links */}
@@ -218,15 +268,18 @@ export default function Hero() {
           ))}
         </motion.div>
 
-        {/* Scroll cue */}
+        {/* Scroll cue → scrolls to About (next section) */}
         <motion.button
           variants={staggerItem}
-          onClick={() => go('services')}
+          onClick={() => go('about')}
           className="flex flex-col items-center gap-2 text-slate-500 hover:text-slate-300 transition-colors"
-          aria-label="Scroll to services"
+          aria-label="Scroll to about"
         >
           <span className="text-xs font-mono tracking-widest uppercase">Scroll</span>
-          <motion.div animate={{ y: [0, 6, 0] }} transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}>
+          <motion.div
+            animate={{ y: [0, 6, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+          >
             <HiArrowDown size={18} />
           </motion.div>
         </motion.button>

@@ -105,11 +105,13 @@ export default function App() {
           <Navbar theme={theme} toggleTheme={toggle} />
 
           <main>
+            {/* Order matches navbar: Home → About → Projects → Skills → Blog → Contact */}
+            {/* Additional sections (Services, Timeline, Certificates) sit between their logical neighbors */}
             <Hero />
+            <Suspense fallback={<SectionSkeleton />}><About /></Suspense>
             <Suspense fallback={<SectionSkeleton />}><Services /></Suspense>
             <Suspense fallback={<SectionSkeleton />}><Projects /></Suspense>
             <Suspense fallback={<SectionSkeleton />}><TechStack /></Suspense>
-            <Suspense fallback={<SectionSkeleton />}><About /></Suspense>
             <Suspense fallback={<SectionSkeleton />}><Timeline /></Suspense>
             <Suspense fallback={<SectionSkeleton />}><Certificates /></Suspense>
             <Suspense fallback={<SectionSkeleton />}><Blog /></Suspense>
