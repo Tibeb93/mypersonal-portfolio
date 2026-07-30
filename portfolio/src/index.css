@@ -2,98 +2,169 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ─── Base ──────────────────────────────────────────────────────────────────── */
+/* ─── CSS Custom Properties (Design Tokens) ─────────────────────────────── */
+:root {
+  /* Brand gradient stops */
+  --color-brand-1: #8B5CF6;   /* violet-500 */
+  --color-brand-2: #EC4899;   /* pink-500  */
+  --color-brand-3: #F97316;   /* orange-500 */
+
+  /* Surface colors — dark mode */
+  --surface-base:    #0B0F19;
+  --surface-raised:  #0F1525;
+  --surface-overlay: #141B2D;
+  --surface-high:    #1A2238;
+
+  /* Text colors — dark mode */
+  --text-primary:   #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-muted:     #64748b;
+
+  /* Spacing rhythm */
+  --section-y: 6rem;
+
+  /* Border radius */
+  --radius-card: 1rem;
+  --radius-pill: 9999px;
+
+  /* Transitions */
+  --transition-base: all 0.3s ease;
+  --transition-fast: all 0.15s ease;
+}
+
+/* Light mode token overrides */
+html.light {
+  --surface-base:    #f1f5f9;
+  --surface-raised:  #ffffff;
+  --surface-overlay: #f8fafc;
+  --surface-high:    #f1f5f9;
+  --text-primary:    #0f172a;
+  --text-secondary:  #475569;
+  --text-muted:      #94a3b8;
+}
+
+/* ─── Base ───────────────────────────────────────────────────────────────── */
 @layer base {
   *, *::before, *::after { box-sizing: border-box; }
 
   html {
     scroll-behavior: smooth;
     scroll-padding-top: 80px;
+    /* Improve text rendering globally */
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   body {
-    background-color: #0B0F19;
-    color: #e2e8f0;
+    background-color: var(--surface-base);
+    color: var(--text-primary);
     font-family: 'Inter', system-ui, sans-serif;
     overflow-x: hidden;
-    -webkit-font-smoothing: antialiased;
+    line-height: 1.6;
+    letter-spacing: -0.01em;
     transition: background-color 0.3s ease, color 0.3s ease;
   }
 
-  /* ── Light theme overrides ─────────────────────────────────────────────── */
-  html.light body {
-    background-color: #f1f5f9;
-    color: #0f172a;
+  /* Better heading defaults */
+  h1, h2, h3, h4 {
+    letter-spacing: -0.02em;
+    line-height: 1.15;
   }
 
   /* Scrollbar */
   ::-webkit-scrollbar { width: 5px; }
-  ::-webkit-scrollbar-track { background: #0B0F19; }
-  html.light ::-webkit-scrollbar-track { background: #e2e8f0; }
+  ::-webkit-scrollbar-track { background: var(--surface-base); }
   ::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #8B5CF6, #EC4899);
+    background: linear-gradient(180deg, var(--color-brand-1), var(--color-brand-2));
     border-radius: 3px;
   }
 
   ::selection {
-    background: rgba(139, 92, 246, 0.35);
+    background: rgba(139, 92, 246, 0.25);
     color: #fff;
+  }
+
+  html.light ::selection {
+    background: rgba(139, 92, 246, 0.15);
+    color: #3b0764;
   }
 }
 
 /* ─── Components ─────────────────────────────────────────────────────────── */
 @layer components {
 
-  /* Glass — dark mode */
+  /* ── Glassmorphism ── */
   .glass {
     background: rgba(255, 255, 255, 0.04);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border: 1px solid rgba(255, 255, 255, 0.07);
-    transition: background 0.3s ease, border-color 0.3s ease;
+    transition: var(--transition-base);
   }
 
-  /* Glass — light mode */
   html.light .glass {
-    background: rgba(255, 255, 255, 0.70);
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+    background: rgba(255, 255, 255, 0.75);
+    border: 1px solid rgba(0, 0, 0, 0.07);
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.05);
   }
 
-  /* Glass-dark nav — dark mode */
   .glass-dark {
-    background: rgba(11, 15, 25, 0.75);
+    background: rgba(11, 15, 25, 0.80);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.06);
     transition: background 0.3s ease;
   }
 
-  /* Glass-dark nav — light mode */
   html.light .glass-dark {
-    background: rgba(255, 255, 255, 0.85);
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
+    background: rgba(255, 255, 255, 0.90);
+    border: 1px solid rgba(0, 0, 0, 0.07);
+    box-shadow: 0 2px 24px rgba(0, 0, 0, 0.08);
   }
 
-  /* Gradient text — same in both themes */
+  /* ── Brand gradient text ── */
   .gradient-text {
-    background: linear-gradient(135deg, #8B5CF6, #EC4899, #F97316);
+    background: linear-gradient(135deg, var(--color-brand-1), var(--color-brand-2), var(--color-brand-3));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
-  .section-padding { padding: 6rem 0; }
+  /* ── Section spacing ── */
+  .section-padding {
+    padding: var(--section-y) 0;
+  }
 
+  /* ── Container ── */
   .container-custom {
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 1.5rem;
   }
+
+  /* ── Tag / badge pills ── */
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+  }
+
+  /* ── Focus ring ── */
+  .focus-ring {
+    outline: 2px solid var(--color-brand-1);
+    outline-offset: 2px;
+  }
 }
 
-/* ─── Light mode text / border helpers ──────────────────────────────────── */
+/* ─── Light mode overrides ───────────────────────────────────────────────── */
+
+/* Text */
 html.light .text-white          { color: #0f172a !important; }
 html.light .text-slate-200      { color: #1e293b !important; }
 html.light .text-slate-300      { color: #334155 !important; }
@@ -101,39 +172,70 @@ html.light .text-slate-400      { color: #475569 !important; }
 html.light .text-slate-500      { color: #64748b !important; }
 html.light .text-slate-600      { color: #94a3b8 !important; }
 
-/* CRITICAL: gradient-text uses -webkit-text-fill-color:transparent
-   so the text-white override above must NOT apply to gradient-text elements */
+/* CRITICAL: gradient-text must NOT be overridden by text-white */
 html.light .gradient-text {
   color: transparent !important;
   -webkit-text-fill-color: transparent !important;
 }
 
-/* Violet text stays violet in light mode — it's intentional */
-html.light .text-violet-300 { color: #7c3aed !important; }
-html.light .text-violet-400 { color: #6d28d9 !important; }
-html.light .text-violet-500 { color: #5b21b6 !important; }
+/* Violet accent stays vibrant in light mode */
+html.light .text-violet-300     { color: #7c3aed !important; }
+html.light .text-violet-400     { color: #6d28d9 !important; }
 
-/* handled via App.jsx conditional classes instead of escaped selectors */
+/* Borders */
+html.light .border-white\/\[0\.06\]  { border-color: rgba(0,0,0,0.07) !important; }
+html.light .border-white\/\[0\.08\]  { border-color: rgba(0,0,0,0.09) !important; }
+html.light .border-white\/\[0\.10\]  { border-color: rgba(0,0,0,0.11) !important; }
+html.light .border-white\/\[0\.12\]  { border-color: rgba(0,0,0,0.13) !important; }
+html.light .border-white\/\[0\.15\]  { border-color: rgba(0,0,0,0.15) !important; }
+html.light .border-white\/5          { border-color: rgba(0,0,0,0.05) !important; }
+html.light .border-white\/8          { border-color: rgba(0,0,0,0.08) !important; }
 
-html.light .border-white\/\[0\.06\]  { border-color: rgba(0,0,0,0.08) !important; }
-html.light .border-white\/\[0\.08\]  { border-color: rgba(0,0,0,0.10) !important; }
-html.light .border-white\/\[0\.10\]  { border-color: rgba(0,0,0,0.12) !important; }
-html.light .border-white\/\[0\.12\]  { border-color: rgba(0,0,0,0.14) !important; }
-html.light .border-white\/\[0\.15\]  { border-color: rgba(0,0,0,0.16) !important; }
-html.light .border-white\/5          { border-color: rgba(0,0,0,0.06) !important; }
-html.light .border-white\/8          { border-color: rgba(0,0,0,0.09) !important; }
+/* Backgrounds */
+html.light .bg-white\/5               { background-color: rgba(0,0,0,0.03) !important; }
+html.light .bg-white\/8               { background-color: rgba(0,0,0,0.05) !important; }
+html.light .bg-white\/\[0\.04\]       { background-color: rgba(0,0,0,0.03) !important; }
+html.light .bg-white\/\[0\.06\]       { background-color: rgba(0,0,0,0.04) !important; }
 
-html.light .bg-white\/5   { background-color: rgba(0,0,0,0.04) !important; }
-html.light .bg-white\/8   { background-color: rgba(0,0,0,0.06) !important; }
-html.light .bg-white\/\[0\.04\] { background-color: rgba(0,0,0,0.03) !important; }
-html.light .bg-white\/\[0\.06\] { background-color: rgba(0,0,0,0.04) !important; }
-
-/* Section backgrounds in light mode */
+/* Section backgrounds */
 html.light section { background-color: transparent; }
 
 /* ─── Animations ─────────────────────────────────────────────────────────── */
 @keyframes float {
   0%, 100% { transform: translateY(0px) rotate(0deg); }
-  33%       { transform: translateY(-15px) rotate(5deg); }
-  66%       { transform: translateY(-8px) rotate(-3deg); }
+  33%       { transform: translateY(-12px) rotate(4deg); }
+  66%       { transform: translateY(-6px) rotate(-3deg); }
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer {
+  from { background-position: -200% center; }
+  to   { background-position: 200% center; }
+}
+
+/* ─── Utility: animated skeleton shimmer ────────────────────────────────── */
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.03) 0%,
+    rgba(255,255,255,0.08) 50%,
+    rgba(255,255,255,0.03) 100%
+  );
+  background-size: 200% auto;
+  animation: shimmer 1.8s linear infinite;
+}
+
+html.light .skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(0,0,0,0.04) 0%,
+    rgba(0,0,0,0.09) 50%,
+    rgba(0,0,0,0.04) 100%
+  );
+  background-size: 200% auto;
+  animation: shimmer 1.8s linear infinite;
 }

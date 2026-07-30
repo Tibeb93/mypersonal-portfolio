@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { Helmet } from 'react-helmet-async'
 import useTheme from './hooks/useTheme'
 import useSettings from './hooks/useSettings'
+import useRealtimeRefresh from './hooks/useRealtimeRefresh'
 
 // ── Critical path ─────────────────────────────────────────────────────────────
 import Navbar from './sections/Navbar'
@@ -38,7 +39,10 @@ function SectionSkeleton() {
 export default function App() {
   const { theme, toggle } = useTheme()
   const { settings }      = useSettings()
-  const isLight = theme === 'light'
+  const isLight           = theme === 'light'
+
+  // Real-time: invalidate all queries when tab becomes visible again
+  useRealtimeRefresh()
 
   const siteTitle  = settings?.seoTitle       || 'Gebremeskel Kiflemeskel | Full Stack Developer'
   const siteDesc   = settings?.seoDescription || 'Full Stack Web Developer from Ethiopia building modern, performant web applications with React, Node.js, and MongoDB.'
