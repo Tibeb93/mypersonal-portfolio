@@ -89,7 +89,6 @@ export const uploadFavicon = async (req, res) => {
   try {
     if (!req.file) return sendError(res, 'No file uploaded.', 400)
 
-    // Delete old favicon if exists
     const existing = await Settings.findOne()
     if (existing?.faviconPublicId) {
       await deleteFromCloudinary(existing.faviconPublicId).catch(() => {})
@@ -105,6 +104,6 @@ export const uploadFavicon = async (req, res) => {
 
     sendSuccess(res, { url: result.secure_url, settings }, 'Favicon uploaded')
   } catch (err) {
-    sendError(res, err.message)
+    sendError(res, `Upload failed: ${err.message}`)
   }
 }
