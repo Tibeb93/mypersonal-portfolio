@@ -145,4 +145,13 @@ app.listen(PORT, () => {
   logger.info(`📡 Health check: http://localhost:${PORT}/health`)
 })
 
+// ── Graceful shutdown ─────────────────────────────────────────────────────────
+process.on('SIGINT', async () => {
+  if (mongod) {
+    await mongod.stop()
+    logger.info('MongoDB Memory Server stopped')
+  }
+  process.exit(0)
+})
+
 export default app
