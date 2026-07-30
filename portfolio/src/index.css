@@ -101,6 +101,18 @@ html.light .text-slate-400      { color: #475569 !important; }
 html.light .text-slate-500      { color: #64748b !important; }
 html.light .text-slate-600      { color: #94a3b8 !important; }
 
+/* CRITICAL: gradient-text uses -webkit-text-fill-color:transparent
+   so the text-white override above must NOT apply to gradient-text elements */
+html.light .gradient-text {
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+/* Violet text stays violet in light mode — it's intentional */
+html.light .text-violet-300 { color: #7c3aed !important; }
+html.light .text-violet-400 { color: #6d28d9 !important; }
+html.light .text-violet-500 { color: #5b21b6 !important; }
+
 /* handled via App.jsx conditional classes instead of escaped selectors */
 
 html.light .border-white\/\[0\.06\]  { border-color: rgba(0,0,0,0.08) !important; }
