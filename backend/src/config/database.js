@@ -2,60 +2,44 @@ import mongoose from 'mongoose'
 import { setServers, setDefaultResultOrder } from 'dns'
 import logger from '../utils/logger.js'
 
-// Force public DNS — fixes ISP blocking MongoDB SRV records
+// Force public DNS to bypass ISP blocks on MongoDB SRV records
 setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1'])
 setDefaultResultOrder('ipv4first')
 
-const MONGO_URI = () => process.env.MONGODB_URI
-
-const MONGO_OPTIONS = {
+const OPTIONS = {
   serverSelectionTimeoutMS: 30000,
   connectTimeoutMS:         30000,
   socketTimeoutMS:          45000,
   family:                   4,
+  maxPoolSize:              10,
 }
 
+let isConnected = false
+
 const connectDB = async () => {
-  let attempt = 0
+  if (isConnected) return
 
-  const tryConnect = async () => {
-    attempt++
+  const attempt = async (count = 1) => {
     try {
-      const conn = await mongoose.connect(MONGO_URI(), MONGO_OPTIONS)
-      logger.info(`MongoDB connected: ${conn.connection.host}`)
-    } catch (error) {
-      logger.error(`MongoDB connection attempt ${attempt} failed: ${error.message}`)
-
+      await mongoose.connect(process.env.MONGODB_URI, OPTIONS)
+      isConnected = true
+      logger.info(`MongoDB connected: ${mongoose.connection.host}`)
+    } catch (err) {
+      logger.error(`MongoDB attempt ${count} failed: ${err.message}`)
       if (process.env.NODE_ENV === 'production') {
-        logger.error('Production MongoDB failed. Exiting for Render restart.')
         process.exit(1)
       }
-
-      // Development — retry every 10s without crashing
-      logger.warn(`Retrying in 10 seconds... (attempt ${attempt})`)
-      setTimeout(tryConnect, 10000)
+      logger.warn(`Retry in 10s... (attempt ${count})`)
+      setTimeout(() => attempt(count + 1), 10000)
     }
   }
 
-  await tryConnect()
+  attempt()
 }
 
-mongoose.connection.on('disconnected', () => {
-  logger.warn('MongoDB disconnected')
-  if (process.env.NODE_ENV !== 'production') {
-    setTimeout(async () => {
-      try {
-        const conn = await mongoose.connect(MONGO_URI(), MONGO_OPTIONS)
-        logger.info(`MongoDB reconnected: ${conn.connection.host}`)
-      } catch (e) {
-        logger.error(`MongoDB reconnect failed: ${e.message}`)
-      }
-    }, 5000)
-  }
-})
-
-mongoose.connection.on('error', (err) => {
-  logger.error(`MongoDB error: ${err.message}`)
-})
+mongoose.connection.on('connected',      () => { isConnected = true;  logger.info(`MongoDB connected: ${mongoose.connection.host}`) })
+mongoose.connection.on('disconnected',   () => { isConnected = false; logger.warn('MongoDB disconnected') })
+mongoose.connection.on('reconnected',    () => { isConnected = true;  logger.info(`MongoDB reconnected: ${mongoose.connection.host}`) })
+mongoose.connection.on('error',          (e) => logger.error(`MongoDB error: ${e.message}`))
 
 export default connectDB
