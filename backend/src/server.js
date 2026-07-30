@@ -6,7 +6,7 @@ import morgan from 'morgan'
 import cookieParser from 'cookie-parser'
 import rateLimit from 'express-rate-limit'
 import mongoSanitize from 'express-mongo-sanitize'
-// Note: xss protection is handled by helmet + input validation
+import mongoose from 'mongoose'
 
 import connectDB from './config/database.js'
 import logger from './utils/logger.js'
@@ -147,10 +147,8 @@ app.listen(PORT, () => {
 
 // ── Graceful shutdown ─────────────────────────────────────────────────────────
 process.on('SIGINT', async () => {
-  if (mongod) {
-    await mongod.stop()
-    logger.info('MongoDB Memory Server stopped')
-  }
+  await mongoose.connection.close().catch(() => {})
+  logger.info('Server shutting down gracefully')
   process.exit(0)
 })
 
