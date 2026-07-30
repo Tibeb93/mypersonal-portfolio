@@ -64,15 +64,19 @@ export const uploadLogo = async (req, res) => {
   try {
     if (!req.file) return sendError(res, 'No file uploaded.', 400)
 
-    const settings = await Settings.findOne() || new Settings()
-    if (settings.logoPublicId) {
-      await deleteFromCloudinary(settings.logoPublicId).catch(() => {})
+    // Delete old logo if exists
+    const existing = await Settings.findOne()
+    if (existing?.logoPublicId) {
+      await deleteFromCloudinary(existing.logoPublicId).catch(() => {})
     }
 
     const result = await uploadToCloudinary(req.file.buffer, 'portfolio/brand')
-    settings.logo = result.secure_url
-    settings.logoPublicId = result.public_id
-    await settings.save()
+
+    const settings = await Settings.findOneAndUpdate(
+      {},
+      { logo: result.secure_url, logoPublicId: result.public_id },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    )
 
     sendSuccess(res, { url: result.secure_url, settings }, 'Logo uploaded')
   } catch (err) {
@@ -85,15 +89,19 @@ export const uploadFavicon = async (req, res) => {
   try {
     if (!req.file) return sendError(res, 'No file uploaded.', 400)
 
-    const settings = await Settings.findOne() || new Settings()
-    if (settings.faviconPublicId) {
-      await deleteFromCloudinary(settings.faviconPublicId).catch(() => {})
+    // Delete old favicon if exists
+    const existing = await Settings.findOne()
+    if (existing?.faviconPublicId) {
+      await deleteFromCloudinary(existing.faviconPublicId).catch(() => {})
     }
 
     const result = await uploadToCloudinary(req.file.buffer, 'portfolio/brand')
-    settings.favicon = result.secure_url
-    settings.faviconPublicId = result.public_id
-    await settings.save()
+
+    const settings = await Settings.findOneAndUpdate(
+      {},
+      { favicon: result.secure_url, faviconPublicId: result.public_id },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    )
 
     sendSuccess(res, { url: result.secure_url, settings }, 'Favicon uploaded')
   } catch (err) {
