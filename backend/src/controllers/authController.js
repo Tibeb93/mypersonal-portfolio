@@ -3,6 +3,14 @@ import User from '../models/User.js'
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/jwt.js'
 import { sendSuccess, sendError } from '../utils/apiResponse.js'
 
+// Cookie options — sameSite 'none' required for cross-domain (Vercel → Render)
+const cookieOptions = {
+  httpOnly: true,
+  secure:   true, // always true — Render uses HTTPS
+  sameSite: 'none', // required for cross-origin requests
+  maxAge:   7 * 24 * 60 * 60 * 1000, // 7 days
+}
+
 // POST /api/auth/login
 export const login = async (req, res) => {
   try {
@@ -18,18 +26,11 @@ export const login = async (req, res) => {
     const accessToken  = signAccessToken(user._id, user.role)
     const refreshToken = signRefreshToken(user._id)
 
-    // Store refresh token hash
     user.refreshToken = crypto.createHash('sha256').update(refreshToken).digest('hex')
     user.lastLogin    = new Date()
     await user.save({ validateBeforeSave: false })
 
-    // Send refresh token in httpOnly cookie
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure:   process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge:   7 * 24 * 60 * 60 * 1000, // 7 days
-    })
+    res.cookie('refreshToken', refreshToken, cookieOptions)
 
     sendSuccess(res, { user, accessToken }, 'Login successful')
   } catch (err) {
@@ -43,24 +44,19 @@ export const refresh = async (req, res) => {
     const token = req.cookies?.refreshToken
     if (!token) return sendError(res, 'No refresh token.', 401)
 
-    const decoded = verifyRefreshToken(token)
+    const decoded     = verifyRefreshToken(token)
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex')
 
     const user = await User.findOne({ _id: decoded.id, refreshToken: hashedToken }).select('+refreshToken')
     if (!user) return sendError(res, 'Invalid refresh token.', 401)
 
-    const accessToken    = signAccessToken(user._id, user.role)
+    const accessToken     = signAccessToken(user._id, user.role)
     const newRefreshToken = signRefreshToken(user._id)
 
     user.refreshToken = crypto.createHash('sha256').update(newRefreshToken).digest('hex')
     await user.save({ validateBeforeSave: false })
 
-    res.cookie('refreshToken', newRefreshToken, {
-      httpOnly: true,
-      secure:   process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge:   7 * 24 * 60 * 60 * 1000,
-    })
+    res.cookie('refreshToken', newRefreshToken, cookieOptions)
 
     sendSuccess(res, { accessToken }, 'Token refreshed')
   } catch (err) {
@@ -74,7 +70,7 @@ export const logout = async (req, res) => {
     if (req.user) {
       await User.findByIdAndUpdate(req.user._id, { refreshToken: null }, { validateBeforeSave: false })
     }
-    res.clearCookie('refreshToken')
+    res.clearCookie('refreshToken', { ...cookieOptions, maxAge: 0 })
     sendSuccess(res, {}, 'Logged out successfully')
   } catch (err) {
     sendError(res, err.message)
