@@ -26,6 +26,7 @@ import mediaRoutes        from './routes/mediaRoutes.js'
 import settingsRoutes     from './routes/settingsRoutes.js'
 import analyticsRoutes    from './routes/analyticsRoutes.js'
 import auditLogRoutes     from './routes/auditLogRoutes.js'
+import aboutRoutes        from './routes/aboutRoutes.js'
 
 // ── Connect to MongoDB ───────────────────────────────────────────────────────
 connectDB()
@@ -68,14 +69,14 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }))
 
-// Global rate limit — 100 requests per 15 minutes per IP
+// Global rate limit — 2000 requests per 15 minutes per IP
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 2000,
   message: { success: false, message: 'Too many requests. Please slow down.' },
   standardHeaders: true,
   legacyHeaders: false,
-  skip: (req) => req.path.startsWith('/api/admin'), // Admin has its own limits
+  skip: (req) => req.originalUrl.includes('/api/admin') || req.originalUrl.includes('/api/auth'),
 }))
 
 // ── General middleware ───────────────────────────────────────────────────────
@@ -120,6 +121,7 @@ app.use('/api/certificates', certificateRoutes)
 app.use('/api/blog',         blogRoutes)
 app.use('/api/contact',      contactRoutes)
 app.use('/api/settings',     settingsRoutes)
+app.use('/api/about',        aboutRoutes)
 
 //  Admin-only routes
 app.use('/api/admin/skills',       skillRoutes)
@@ -132,6 +134,7 @@ app.use('/api/admin/contact',      contactRoutes)
 app.use('/api/admin/profile',      profileRoutes)
 app.use('/api/admin/media',        mediaRoutes)
 app.use('/api/admin/settings',     settingsRoutes)
+app.use('/api/admin/about',        aboutRoutes)
 app.use('/api/admin/analytics',    analyticsRoutes)
 app.use('/api/admin/audit-log',    auditLogRoutes)
 

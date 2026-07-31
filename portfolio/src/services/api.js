@@ -63,6 +63,10 @@ export const settingsAPI = {
   getPublic: () => api.get('/settings/public'),
 }
 
+export const aboutAPI = {
+  get: () => api.get('/about'),
+}
+
 // Track page view (fire-and-forget)
 export const trackView = (page) =>
   api.post('/analytics/pageview', { page }).catch(() => {})

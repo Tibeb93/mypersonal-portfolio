@@ -5,7 +5,7 @@ import {
   HiBriefcase, HiAcademicCap, HiBadgeCheck,
   HiDocumentText, HiPhotograph, HiMail,
   HiCog, HiClipboardList, HiLogout, HiX,
-  HiChartBar,
+  HiChartBar, HiInformationCircle,
 } from 'react-icons/hi'
 import useAuthStore from '../stores/authStore.js'
 import { authAPI } from '../api/endpoints.js'
@@ -14,6 +14,7 @@ import toast from 'react-hot-toast'
 const NAV_ITEMS = [
   { label: 'Dashboard',    icon: HiHome,          to: '/dashboard'    },
   { label: 'Profile',      icon: HiUser,          to: '/profile'      },
+  { label: 'About',        icon: HiInformationCircle, to: '/about'  },
   { label: 'Skills',       icon: HiLightningBolt, to: '/skills'       },
   { label: 'Projects',     icon: HiViewGrid,      to: '/projects'     },
   { label: 'Experience',   icon: HiBriefcase,     to: '/experience'   },

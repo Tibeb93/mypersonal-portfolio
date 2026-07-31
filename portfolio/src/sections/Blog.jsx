@@ -4,6 +4,7 @@ import { HiClock, HiEye, HiTag, HiArrowRight } from 'react-icons/hi'
 import { useQuery } from '@tanstack/react-query'
 import SectionTitle from '../components/SectionTitle'
 import Skeleton from '../components/Skeleton'
+import BlogDetailModal from '../components/BlogDetailModal'
 import { staggerContainer, staggerItem, viewport } from '../utils/animations'
 import { blogAPI } from '../services/api'
 
@@ -12,7 +13,7 @@ function formatDate(dateStr) {
   return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
-function BlogCard({ post, index }) {
+function BlogCard({ post, index, onReadMore }) {
   const colors = ['violet', 'pink', 'orange', 'cyan', 'emerald']
   const color = colors[index % colors.length]
   const borderMap = { violet: 'hover:border-violet-500/30', pink: 'hover:border-pink-500/30', orange: 'hover:border-orange-500/30', cyan: 'hover:border-cyan-500/30', emerald: 'hover:border-emerald-500/30' }
@@ -52,6 +53,12 @@ function BlogCard({ post, index }) {
             {post.category}
           </span>
         </div>
+
+        {post.videoUrl && (
+          <div className="absolute top-3 left-3 w-8 h-8 rounded-full bg-black/60 flex items-center justify-center">
+            <svg className="w-3.5 h-3.5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          </div>
+        )}
       </div>
 
       {/* Body */}
@@ -86,10 +93,13 @@ function BlogCard({ post, index }) {
           </div>
         )}
 
-        <div className={`flex items-center gap-1.5 text-xs font-semibold ${textMap[color]}
-          group-hover:gap-2.5 transition-all duration-200`}>
+        <button
+          onClick={() => onReadMore(post.slug)}
+          className={`flex items-center gap-1.5 text-xs font-semibold ${textMap[color]}
+            group-hover:gap-2.5 transition-all duration-200`}
+        >
           Read More <HiArrowRight size={13} />
-        </div>
+        </button>
       </div>
     </motion.article>
   )
@@ -97,6 +107,7 @@ function BlogCard({ post, index }) {
 
 export default function Blog() {
   const [activeCategory, setActiveCategory] = useState('all')
+  const [selectedSlug, setSelectedSlug] = useState(null)
 
   const { data: blogsData, isLoading } = useQuery({
     queryKey: ['blog', { category: activeCategory }],
@@ -113,7 +124,6 @@ export default function Blog() {
   const posts      = blogsData?.data     ?? []
   const categories = ['all', ...(categoriesData?.data?.categories ?? [])]
 
-  // Don't render section if no posts
   if (!isLoading && posts.length === 0) return null
 
   return (
@@ -122,7 +132,6 @@ export default function Blog() {
         <SectionTitle label="My Writing" title="Latest" highlight="Articles"
           description="Thoughts, tutorials, and insights on web development, design, and technology." />
 
-        {/* Category filter */}
         {categories.length > 1 && (
           <div className="flex flex-wrap justify-center gap-2 mb-10">
             {categories.map((cat) => (
@@ -147,10 +156,14 @@ export default function Blog() {
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
             variants={staggerContainer} initial="hidden" whileInView="visible" viewport={viewport}
           >
-            {posts.map((post, i) => <BlogCard key={post._id} post={post} index={i} />)}
+            {posts.map((post, i) => (
+              <BlogCard key={post._id} post={post} index={i} onReadMore={setSelectedSlug} />
+            ))}
           </motion.div>
         )}
       </div>
+
+      <BlogDetailModal slug={selectedSlug} onClose={() => setSelectedSlug(null)} />
     </section>
   )
 }

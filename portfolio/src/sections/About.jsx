@@ -6,7 +6,7 @@ import Button from '../components/Button'
 import Skeleton from '../components/Skeleton'
 import { fadeInLeft, fadeInRight, viewport } from '../utils/animations'
 import useProfile from '../hooks/useProfile'
-import profileImageFallback from '../assets/profileImage.jpg'
+import useAbout from '../hooks/useAbout'
 
 const ICON_MAP = { FaGithub, FaTelegram, FaLinkedin }
 
@@ -17,17 +17,30 @@ const FALLBACK_SOCIALS = [
 ]
 
 export default function About() {
-  const { profile, isLoading } = useProfile()
+  const { profile, isLoading: profileLoading } = useProfile()
+  const { about, isLoading: aboutLoading } = useAbout()
   const go = (id) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+
+  const isLoading = profileLoading || aboutLoading
 
   const name       = profile?.name       || 'Gebremeskel Kiflemeskel'
   const title      = profile?.title      || 'Full Stack Developer'
-  const bio        = profile?.bio        || "I'm a passionate Full Stack Web Developer and Computer Science student based in Ethiopia. I specialize in building modern, performant web applications that solve real problems."
-  const location   = profile?.location   || 'Ethiopia 🇪🇹'
-  const photoSrc   = profile?.profileImage || profileImageFallback
+  const location   = profile?.location   || 'Ethiopia'
+  const photoSrc   = about?.image || profile?.profileImage || '/assets/profileImage.jpg'
   const resumeUrl  = profile?.resumeUrl    || '/Gebremeskel_Kiflemeskel_CV.pdf'
   const yearsExp   = profile?.yearsExperience ?? 2
   const projCount  = profile?.projectsCount   ?? 20
+
+  const sectionTitle = about?.title       || 'About Me'
+  const subtitle     = about?.subtitle    || 'Get to know me better'
+  const heading      = about?.heading     || 'Turning ideas into digital reality'
+  const description  = about?.description || profile?.bio || "I'm a passionate Full Stack Web Developer and Computer Science student based in Ethiopia. I specialize in building modern, performant web applications that solve real problems."
+  const mission      = about?.mission     || ''
+  const vision       = about?.vision      || ''
+  const values       = about?.values      || []
+  const stats        = about?.stats       || []
+  const ctaText      = about?.ctaText     || 'Get In Touch'
+  const ctaLink      = about?.ctaLink     || '#contact'
 
   const socials = profile?.socials?.length
     ? profile.socials.map((s) => ({ Icon: ICON_MAP[s.icon] || FaGithub, href: s.url, label: s.platform }))
@@ -43,8 +56,8 @@ export default function About() {
   return (
     <section id="about" className="section-padding">
       <div className="container-custom">
-        <SectionTitle label="Who I Am" title="About" highlight="Me"
-          description="A passionate developer on a mission to build impactful digital experiences." />
+        <SectionTitle label="Who I Am" title={sectionTitle.split(' ').slice(0, -1).join(' ')} highlight={sectionTitle.split(' ').slice(-1)[0]}
+          description={subtitle} />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
 
@@ -105,56 +118,100 @@ export default function About() {
               </div>
 
               {/* Floating stat badges */}
-              <motion.div
-                className="absolute -bottom-4 -right-4 glass rounded-2xl border border-white/10 px-4 py-3 text-center"
-                animate={{ y: [0, -8, 0] }}
-                transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}>
-                <div className="text-2xl font-black gradient-text">{yearsExp}+</div>
-                <div className="text-xs text-slate-400 font-medium">Years Exp.</div>
-              </motion.div>
-              <motion.div
-                className="absolute -top-4 -left-4 glass rounded-2xl border border-white/10 px-4 py-3 text-center"
-                animate={{ y: [0, 8, 0] }}
-                transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: 2 }}>
-                <div className="text-2xl font-black gradient-text">{projCount}+</div>
-                <div className="text-xs text-slate-400 font-medium">Projects</div>
-              </motion.div>
+              {(stats.length > 0 ? stats : [
+                { label: 'Years Exp.', value: `${yearsExp}+` },
+                { label: 'Projects',  value: `${projCount}+` },
+              ]).slice(0, 2).map((stat, i) => (
+                <motion.div
+                  key={i}
+                  className={`absolute ${i === 0 ? '-bottom-4 -right-4' : '-top-4 -left-4'} glass rounded-2xl border border-white/10 px-4 py-3 text-center`}
+                  animate={{ y: [0, i === 0 ? -8 : 8, 0] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: i * 2 }}>
+                  <div className="text-2xl font-black gradient-text">{stat.value}</div>
+                  <div className="text-xs text-slate-400 font-medium">{stat.label}</div>
+                </motion.div>
+              ))}
             </div>
           </motion.div>
 
           {/* ── Text side ── */}
           <motion.div variants={fadeInRight} initial="hidden" whileInView="visible" viewport={viewport}>
             <h3 className="text-2xl sm:text-3xl font-bold text-white mb-4">
-              Turning ideas into <span className="gradient-text">digital reality</span>
+              {heading.split(' ').map((word, i, arr) => {
+                const isLast = i === arr.length - 1
+                const isSecondLast = i === arr.length - 2
+                return isLast || isSecondLast
+                  ? <span key={i} className="gradient-text">{word} </span>
+                  : <span key={i}>{word} </span>
+              })}
             </h3>
 
             {isLoading ? (
-              <div className="mb-8"><Skeleton.Text lines={4} /></div>
+              <div className="mb-8"><Skeleton lines={4} /></div>
             ) : (
               <div className="space-y-4 text-slate-400 leading-relaxed mb-8">
-                {bio.split('\n').filter(Boolean).map((para, i) => (
+                {description.split('\n').filter(Boolean).map((para, i) => (
                   <p key={i}>{para}</p>
                 ))}
               </div>
             )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
-              {HIGHLIGHTS.map(({ Icon, label, value, color, bg }) => (
-                <div key={label} className={`flex items-center gap-3 p-3 rounded-xl border ${bg}
-                  transition-all duration-200 hover:scale-[1.02]`}>
-                  <div className={`w-9 h-9 rounded-lg ${bg} flex items-center justify-center flex-shrink-0`}>
-                    <Icon size={18} className={color} />
+            {/* Mission & Vision */}
+            {(mission || vision) && (
+              <div className="space-y-4 mb-8">
+                {mission && (
+                  <div className="p-4 rounded-xl bg-violet-500/5 border border-violet-500/10">
+                    <h4 className="text-sm font-bold text-violet-400 uppercase tracking-wider mb-2">Mission</h4>
+                    <p className="text-slate-400 text-sm leading-relaxed">{mission}</p>
                   </div>
-                  <div>
-                    <div className="text-xs text-slate-500 font-medium">{label}</div>
-                    <div className="text-sm text-white font-semibold">{value}</div>
+                )}
+                {vision && (
+                  <div className="p-4 rounded-xl bg-pink-500/5 border border-pink-500/10">
+                    <h4 className="text-sm font-bold text-pink-400 uppercase tracking-wider mb-2">Vision</h4>
+                    <p className="text-slate-400 text-sm leading-relaxed">{vision}</p>
                   </div>
-                </div>
-              ))}
-            </div>
+                )}
+              </div>
+            )}
+
+            {/* Values */}
+            {values.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
+                {values.map((v, i) => (
+                  <div key={i} className="flex items-center gap-3 p-3 rounded-xl border bg-white/5 border-white/10
+                    transition-all duration-200 hover:scale-[1.02]">
+                    <div>
+                      {v.title && <div className="text-sm text-white font-semibold">{v.title}</div>}
+                      {v.description && <div className="text-xs text-slate-500">{v.description}</div>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Highlights (when no custom values) */}
+            {values.length === 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
+                {HIGHLIGHTS.map(({ Icon, label, value, color, bg }) => (
+                  <div key={label} className={`flex items-center gap-3 p-3 rounded-xl border ${bg}
+                    transition-all duration-200 hover:scale-[1.02]`}>
+                    <div className={`w-9 h-9 rounded-lg ${bg} flex items-center justify-center flex-shrink-0`}>
+                      <Icon size={18} className={color} />
+                    </div>
+                    <div>
+                      <div className="text-xs text-slate-500 font-medium">{label}</div>
+                      <div className="text-sm text-white font-semibold">{value}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             <div className="flex flex-col sm:flex-row gap-3">
-              <Button variant="primary" size="md" onClick={() => go('contact')}>Get In Touch</Button>
+              <Button variant="primary" size="md" onClick={() => {
+                const id = ctaLink.replace('#', '')
+                document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+              }}>{ctaText}</Button>
               <a
                 href={resumeUrl}
                 download

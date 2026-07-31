@@ -1,24 +1,25 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { HiPlus, HiPencil, HiTrash, HiEye, HiSave, HiX } from 'react-icons/hi'
+import { HiPlus, HiPencil, HiTrash, HiSave, HiX } from 'react-icons/hi'
 import toast from 'react-hot-toast'
 import PageHeader from '../components/PageHeader.jsx'
 import Modal from '../components/Modal.jsx'
 import ConfirmModal from '../components/ConfirmModal.jsx'
 import DataTable from '../components/DataTable.jsx'
+import ImageUpload from '../components/ImageUpload.jsx'
 import { blogAPI } from '../api/endpoints.js'
-import useAuthStore from '../stores/authStore.js'
 
 const STATUSES = ['draft','published','archived']
-const EMPTY = { title:'', excerpt:'', content:'', category:'', tags:'', status:'draft', featured:false, seoTitle:'', seoDescription:'', seoKeywords:'' }
+const EMPTY = { title:'', excerpt:'', content:'', category:'', tags:'', status:'draft', featured:false, coverImage:'', videoUrl:'', seoTitle:'', seoDescription:'', seoKeywords:'' }
 
-function BlogForm({ initial, onSave, onCancel, loading }) {
+function BlogForm({ initial, onSave, onCancel, loading, coverUpload }) {
   const [form, setForm] = useState(initial
     ? { ...initial, tags:(initial.tags||[]).join(', '), seoKeywords:(initial.seoKeywords||[]).join(', ') }
     : EMPTY)
   const set = (k,v) => setForm(f=>({...f,[k]:v}))
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
       <div><label className="label">Title *</label><input value={form.title} onChange={e=>set('title',e.target.value)} required className="input"/></div>
       <div><label className="label">Excerpt *</label><textarea rows={2} value={form.excerpt} onChange={e=>set('excerpt',e.target.value)} required className="input resize-none"/></div>
       <div className="grid grid-cols-2 gap-4">
@@ -26,6 +27,23 @@ function BlogForm({ initial, onSave, onCancel, loading }) {
         <div><label className="label">Status</label><select value={form.status} onChange={e=>set('status',e.target.value)} className="input">{STATUSES.map(s=><option key={s} value={s}>{s}</option>)}</select></div>
       </div>
       <div><label className="label">Tags (comma-separated)</label><input value={form.tags||''} onChange={e=>set('tags',e.target.value)} className="input"/></div>
+
+      {/* Cover Image Upload */}
+      <ImageUpload
+        label="Cover Image"
+        value={form.coverImage}
+        onChange={(file) => set('_coverFile', file)}
+        onUpload={coverUpload ? async (formData) => {
+          const url = await coverUpload(formData)
+          if (url) set('coverImage', url)
+          return url
+        } : undefined}
+        uploading={coverUpload ? false : undefined}
+        fieldName="cover"
+        hint="Recommended: 1200x630px for social sharing"
+      />
+
+      <div><label className="label">Video URL (YouTube / Vimeo embed URL)</label><input value={form.videoUrl||''} onChange={e=>set('videoUrl',e.target.value)} placeholder="https://www.youtube.com/embed/..." className="input"/></div>
       <div><label className="label">Content (Markdown) *</label><textarea rows={12} value={form.content} onChange={e=>set('content',e.target.value)} required placeholder="Write your article in Markdown…" className="input resize-none font-mono text-xs"/></div>
       <div className="border-t border-white/[0.06] pt-4">
         <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">SEO Settings</p>
@@ -49,7 +67,6 @@ function BlogForm({ initial, onSave, onCancel, loading }) {
 
 export default function BlogManager() {
   const qc = useQueryClient()
-  const { user } = useAuthStore()
   const [page, setPage] = useState(1)
   const [modal, setModal] = useState(null)
   const [delId, setDelId] = useState(null)
@@ -65,14 +82,22 @@ export default function BlogManager() {
   const createMutation = useMutation({ mutationFn: blogAPI.create, onSuccess:()=>{ toast.success('Post created'); qc.invalidateQueries(['admin-blog']); setModal(null) }, onError:(e)=>toast.error(e.message) })
   const updateMutation = useMutation({ mutationFn:({id,data})=>blogAPI.update(id,data), onSuccess:()=>{ toast.success('Post updated'); qc.invalidateQueries(['admin-blog']); setModal(null) }, onError:(e)=>toast.error(e.message) })
   const deleteMutation = useMutation({ mutationFn: blogAPI.delete, onSuccess:()=>{ toast.success('Post deleted'); qc.invalidateQueries(['admin-blog']); setDelId(null) }, onError:(e)=>toast.error(e.message) })
+  const coverMutation = useMutation({ mutationFn:({id,form})=>blogAPI.uploadCover(id, form), onSuccess:()=>{ qc.invalidateQueries(['admin-blog']) }, onError:(e)=>toast.error(e.message) })
 
   const statusColor = { draft:'badge-slate', published:'badge-emerald', archived:'badge-orange' }
 
   const columns = [
     { key:'title', label:'Title', render:(v,row)=>(
-      <div>
-        <p className="font-semibold text-white text-sm line-clamp-1">{v}</p>
-        <p className="text-xs text-slate-500 mt-0.5">{row.category}</p>
+      <div className="flex items-center gap-3">
+        {row.coverImage ? (
+          <img src={row.coverImage} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0"/>
+        ) : (
+          <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0 text-slate-600 text-xs font-bold">{v[0]}</div>
+        )}
+        <div>
+          <p className="font-semibold text-white text-sm line-clamp-1">{v}</p>
+          <p className="text-xs text-slate-500 mt-0.5">{row.category}</p>
+        </div>
       </div>
     )},
     { key:'status', label:'Status', render:(v)=><span className={statusColor[v]||'badge-slate'}>{v}</span> },
@@ -86,6 +111,32 @@ export default function BlogManager() {
       </div>
     )},
   ]
+
+  const handleSave = (formData) => {
+    const { _coverFile, ...data } = formData
+    if (modal === 'add') {
+      createMutation.mutate(data, {
+        onSuccess: (res) => {
+          const newId = res?.data?.blog?._id || res?.data?._id
+          if (newId && _coverFile) {
+            const fd = new FormData()
+            fd.append('cover', _coverFile)
+            coverMutation.mutate({ id: newId, form: fd })
+          }
+        }
+      })
+    } else {
+      updateMutation.mutate({ id: modal.post._id, data }, {
+        onSuccess: () => {
+          if (_coverFile) {
+            const fd = new FormData()
+            fd.append('cover', _coverFile)
+            coverMutation.mutate({ id: modal.post._id, form: fd })
+          }
+        }
+      })
+    }
+  }
 
   return (
     <div>
@@ -102,8 +153,13 @@ export default function BlogManager() {
       <DataTable columns={columns} data={posts} loading={isLoading} pagination={pagination} onPageChange={setPage}
         emptyMessage="No blog posts yet. Click New Post to start writing."/>
       <Modal open={!!modal} onClose={()=>setModal(null)} size="xl" title={modal==='add'?'New Blog Post':`Edit: ${modal?.post?.title}`}>
-        <BlogForm initial={modal==='add'?null:modal?.post} loading={createMutation.isPending||updateMutation.isPending} onCancel={()=>setModal(null)}
-          onSave={(data)=>{ if(modal==='add') createMutation.mutate(data); else updateMutation.mutate({id:modal.post._id,data}) }}/>
+        <BlogForm
+          initial={modal==='add'?null:modal?.post}
+          loading={createMutation.isPending||updateMutation.isPending||coverMutation.isPending}
+          onCancel={()=>setModal(null)}
+          onSave={handleSave}
+          coverUpload={modal==='add' ? null : (form) => blogAPI.uploadCover(modal.post._id, form)}
+        />
       </Modal>
       <ConfirmModal open={!!delId} title="Delete Post" message="This blog post will be permanently deleted." loading={deleteMutation.isPending} onCancel={()=>setDelId(null)} onConfirm={()=>deleteMutation.mutate(delId)}/>
     </div>

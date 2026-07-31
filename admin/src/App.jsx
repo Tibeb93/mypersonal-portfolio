@@ -15,6 +15,7 @@ import MediaLibrary     from './pages/MediaLibrary.jsx'
 import ContactInbox     from './pages/ContactInbox.jsx'
 import Analytics        from './pages/Analytics.jsx'
 import SettingsManager  from './pages/SettingsManager.jsx'
+import AboutManager     from './pages/AboutManager.jsx'
 import AuditLog         from './pages/AuditLog.jsx'
 import AccountSettings  from './pages/AccountSettings.jsx'
 
@@ -45,6 +46,7 @@ export default function App() {
         <Route path="contact"      element={<ContactInbox />} />
         <Route path="analytics"    element={<Analytics />} />
         <Route path="settings"     element={<SettingsManager />} />
+        <Route path="about"        element={<AboutManager />} />
         <Route path="audit-log"    element={<AuditLog />} />
         <Route path="account"      element={<AccountSettings />} />
       </Route>

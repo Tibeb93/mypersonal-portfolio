@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { FaGithub, FaTelegram, FaLinkedin, FaHeart } from 'react-icons/fa'
+import { FaGithub, FaTelegram, FaLinkedin } from 'react-icons/fa'
 import { HiArrowUp } from 'react-icons/hi'
 import useProfile from '../hooks/useProfile'
 import useSettings from '../hooks/useSettings'
@@ -54,7 +54,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-10">
 
           {/* Brand */}
-          <div className="md:col-span-2">
+          <div>
             <div className="flex items-center gap-2 mb-4">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 via-pink-600 to-orange-500
                 flex items-center justify-center shadow-[0_0_20px_rgba(139,92,246,0.4)]">
@@ -78,21 +78,23 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Navigation */}
-          <div>
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Navigation</h3>
-            <ul className="space-y-2.5">
-              {[...visibleNav, ...extraNav].map(({ label, id }) => (
-                <li key={id}>
-                  <button onClick={() => go(id)}
-                    className="text-slate-500 hover:text-white text-sm transition-colors duration-200
-                      flex items-center gap-2 group">
-                    <span className="w-0 group-hover:w-3 h-px bg-gradient-to-r from-violet-500 to-pink-500 transition-all duration-300" />
-                    {label}
-                  </button>
-                </li>
-              ))}
-            </ul>
+          {/* Navigation — two columns */}
+          <div className="md:col-span-2">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6 text-center">Navigation</h3>
+            <div className="flex justify-center">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                {[...visibleNav, ...extraNav].map(({ label, id }) => (
+                  <li key={id} className="list-none">
+                    <button onClick={() => go(id)}
+                      className="text-slate-500 hover:text-white text-sm transition-colors duration-200
+                        flex items-center gap-2 group">
+                      <span className="w-0 group-hover:w-3 h-px bg-gradient-to-r from-violet-500 to-pink-500 transition-all duration-300" />
+                      {label}
+                    </button>
+                  </li>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* Contact */}
@@ -123,8 +125,8 @@ export default function Footer() {
 
         {/* Bottom bar */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-8 border-t border-white/[0.05]">
-          <p className="text-slate-600 text-sm flex items-center gap-1.5">
-            {copyright} · Built with <FaHeart size={12} className="text-pink-500" /> in Ethiopia.
+          <p className="text-slate-600 text-sm">
+            {copyright}
           </p>
           <p className="text-slate-600 text-xs font-mono">React + Vite + Tailwind + Framer Motion</p>
           <motion.button

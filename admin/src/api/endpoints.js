@@ -101,6 +101,13 @@ export const settingsAPI = {
   uploadFavicon: (form) => api.post('/admin/settings/favicon', form, { headers: { 'Content-Type': 'multipart/form-data' } }),
 }
 
+// ── About ─────────────────────────────────────────────────────────────────
+export const aboutAPI = {
+  get:          ()     => api.get('/admin/about'),
+  update:       (data) => api.put('/admin/about', data),
+  uploadImage:  (form) => api.post('/admin/about/image', form, { headers: { 'Content-Type': 'multipart/form-data' } }),
+}
+
 // ── Analytics ─────────────────────────────────────────────────────────────
 export const analyticsAPI = {
   overview:        ()       => api.get('/admin/analytics/overview'),

@@ -9,6 +9,7 @@ const blogSchema = new mongoose.Schema(
     content:     { type: String, required: true },
     coverImage:  { type: String },
     coverPublicId:{ type: String },
+    videoUrl:    { type: String },
     author:      { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     category:    { type: String, required: true },
     tags:        [{ type: String, lowercase: true }],
