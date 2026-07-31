@@ -1,3 +1,4 @@
+import https from 'https'
 import Profile from '../models/Profile.js'
 import { sendSuccess, sendError } from '../utils/apiResponse.js'
 import { uploadToCloudinary, deleteFromCloudinary } from '../utils/cloudinaryUpload.js'
@@ -60,6 +61,12 @@ export const uploadResume = async (req, res) => {
   try {
     if (!req.file) return sendError(res, 'No file uploaded.', 400)
 
+    // Remove old resume if exists
+    const profile = await Profile.findOne()
+    if (profile?.resumePublicId) {
+      await deleteFromCloudinary(profile.resumePublicId, 'raw').catch(() => {})
+    }
+
     const result = await uploadToCloudinary(req.file.buffer, 'portfolio/resume', 'raw')
 
     await Profile.findOneAndUpdate(
@@ -72,4 +79,80 @@ export const uploadResume = async (req, res) => {
   } catch (err) {
     sendError(res, err.message)
   }
+}
+
+// GET /api/profile/resume/download  (public)
+export const downloadResume = async (req, res) => {
+  try {
+    const profile = await Profile.findOne()
+    if (!profile?.resumeUrl) return sendError(res, 'No resume available.', 404)
+
+    const filename = extractFilename(profile.resumeUrl)
+
+    https.get(profile.resumeUrl, (fileResponse) => {
+      if (fileResponse.statusCode === 301 || fileResponse.statusCode === 302) {
+        https.get(fileResponse.headers.location, (redirectRes) => {
+          setDownloadHeaders(res, redirectRes, filename)
+          redirectRes.pipe(res)
+        })
+        return
+      }
+      setDownloadHeaders(res, fileResponse, filename)
+      fileResponse.pipe(res)
+    }).on('error', (err) => {
+      sendError(res, 'Failed to download resume.')
+    })
+  } catch (err) {
+    sendError(res, err.message)
+  }
+}
+
+// GET /api/profile/resume/preview  (public)
+export const previewResume = async (req, res) => {
+  try {
+    const profile = await Profile.findOne()
+    if (!profile?.resumeUrl) return sendError(res, 'No resume available.', 404)
+
+    https.get(profile.resumeUrl, (fileResponse) => {
+      if (fileResponse.statusCode === 301 || fileResponse.statusCode === 302) {
+        https.get(fileResponse.headers.location, (redirectRes) => {
+          res.set({
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': 'inline',
+          })
+          redirectRes.pipe(res)
+        })
+        return
+      }
+      res.set({
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': 'inline',
+      })
+      fileResponse.pipe(res)
+    }).on('error', (err) => {
+      sendError(res, 'Failed to load resume.')
+    })
+  } catch (err) {
+    sendError(res, err.message)
+  }
+}
+
+function extractFilename(url) {
+  try {
+    const pathname = new URL(url).pathname
+    const segments = pathname.split('/')
+    const lastSegment = segments[segments.length - 1]
+    if (lastSegment && lastSegment.includes('.')) {
+      return decodeURIComponent(lastSegment)
+    }
+  } catch {}
+  return 'resume.pdf'
+}
+
+function setDownloadHeaders(res, fileResponse, filename) {
+  res.set({
+    'Content-Type': 'application/pdf',
+    'Content-Disposition': `attachment; filename="${filename}"`,
+    'Content-Length': fileResponse.headers['content-length'],
+  })
 }

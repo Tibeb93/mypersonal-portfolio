@@ -4,6 +4,8 @@ import {
   updateProfile,
   uploadProfileImage,
   uploadResume,
+  downloadResume,
+  previewResume,
 } from '../controllers/profileController.js'
 import { protect, authorize } from '../middleware/auth.js'
 import { uploadImage, uploadDocument, handleMulterError } from '../middleware/upload.js'
@@ -13,6 +15,8 @@ const router = Router()
 
 // ── Public ──────────────────────────────────────────────────────────────────
 router.get('/', getProfile)
+router.get('/resume/download', downloadResume)
+router.get('/resume/preview', previewResume)
 
 // ── Admin ────────────────────────────────────────────────────────────────────
 router.use(protect, authorize('admin', 'super_admin'))

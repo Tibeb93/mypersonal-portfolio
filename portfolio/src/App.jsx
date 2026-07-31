@@ -92,7 +92,7 @@ export default function App() {
         })}</script>
       </Helmet>
 
-      <div className={`min-h-screen overflow-x-hidden transition-colors duration-300
+      <div className={`overflow-x-hidden transition-colors duration-300
         ${isLight ? 'bg-slate-100 text-slate-800' : 'bg-[#0B0F19] text-slate-200'}`}>
 
         {/* Ambient background glows */}

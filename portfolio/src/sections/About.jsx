@@ -7,6 +7,7 @@ import Skeleton from '../components/Skeleton'
 import { fadeInLeft, fadeInRight, viewport } from '../utils/animations'
 import useProfile from '../hooks/useProfile'
 import useAbout from '../hooks/useAbout'
+import { BASE_URL } from '../services/api'
 
 const ICON_MAP = { FaGithub, FaTelegram, FaLinkedin }
 
@@ -28,6 +29,9 @@ export default function About() {
   const location   = profile?.location   || 'Ethiopia'
   const photoSrc   = about?.image || profile?.profileImage || '/assets/profileImage.jpg'
   const resumeUrl  = profile?.resumeUrl    || '/Gebremeskel_Kiflemeskel_CV.pdf'
+  const resumeDownloadUrl = profile?.resumeUrl
+    ? `${BASE_URL}/profile/resume/download`
+    : '/Gebremeskel_Kiflemeskel_CV.pdf'
   const yearsExp   = profile?.yearsExperience ?? 2
   const projCount  = profile?.projectsCount   ?? 20
 
@@ -213,7 +217,7 @@ export default function About() {
                 document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
               }}>{ctaText}</Button>
               <a
-                href={resumeUrl}
+                href={resumeDownloadUrl}
                 download
                 className="inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold rounded-xl
                   bg-transparent text-white border border-violet-500/50

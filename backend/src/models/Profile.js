@@ -23,6 +23,7 @@ const profileSchema = new mongoose.Schema(
     profileImage:   { type: String },
     heroImage:      { type: String },
     resumeUrl:      { type: String },
+    resumePublicId: { type: String },
     yearsExperience:{ type: Number, default: 0 },
     projectsCount:  { type: Number, default: 0 },
     available:      { type: Boolean, default: true },

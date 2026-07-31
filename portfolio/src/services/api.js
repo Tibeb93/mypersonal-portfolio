@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 // Use env var if set (Vercel dashboard), otherwise use the deployed backend
-const BASE_URL = import.meta.env.VITE_API_URL || 'https://portfolio-backend-jwdp.onrender.com/api'
+export const BASE_URL = import.meta.env.VITE_API_URL || 'https://portfolio-backend-jwdp.onrender.com/api'
 
 const api = axios.create({
   baseURL: BASE_URL,

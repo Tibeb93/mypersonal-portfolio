@@ -50,8 +50,8 @@ export default function Footer() {
     <footer className="relative border-t border-white/[0.06]">
       <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-violet-500/40 to-transparent" />
 
-      <div className="container-custom py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-10">
+      <div className="container-custom py-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-6">
 
           {/* Brand */}
           <div>
@@ -124,7 +124,7 @@ export default function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-8 border-t border-white/[0.05]">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-white/[0.05]">
           <p className="text-slate-600 text-sm">
             {copyright}
           </p>

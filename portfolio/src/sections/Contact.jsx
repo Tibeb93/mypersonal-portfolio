@@ -93,7 +93,7 @@ export default function Contact() {
   }
 
   return (
-    <section id="contact" className="section-padding">
+    <section id="contact" className="pt-24 pb-8">
       <div className="container-custom">
         <SectionTitle label="Get In Touch" title="Let's" highlight="Connect"
           description="Have a project in mind or just want to say hello? I'd love to hear from you." />

@@ -7,6 +7,7 @@ import { staggerContainer, staggerItem } from '../utils/animations'
 import useProfile from '../hooks/useProfile'
 import useTheme from '../hooks/useTheme'
 import profileImageFallback from '../assets/profileImage.jpg'
+import { BASE_URL } from '../services/api'
 
 const ICON_MAP = { FaGithub, FaTelegram, FaLinkedin }
 
@@ -17,7 +18,7 @@ const FALLBACK_SOCIALS = [
 ]
 
 // ── CV Preview Tooltip ────────────────────────────────────────────────────────
-function CVPreviewTooltip({ resumeUrl, children }) {
+function CVPreviewTooltip({ resumeUrl, resumeDownloadUrl, resumePreviewUrl, children }) {
   const [show, setShow] = useState(false)
 
   return (
@@ -50,14 +51,14 @@ function CVPreviewTooltip({ resumeUrl, children }) {
                 <span className="text-xs text-slate-400 font-medium">Curriculum Vitae</span>
               </div>
               <div className="p-3 flex gap-2">
-                <a href={resumeUrl} target="_blank" rel="noopener noreferrer"
+                <a href={resumePreviewUrl} target="_blank" rel="noopener noreferrer"
                   onClick={e => e.stopPropagation()}
                   className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg
                     text-xs font-semibold text-slate-300 bg-white/5 hover:bg-white/10
                     border border-white/10 transition-all duration-200">
                   <HiEye size={13} /> Preview
                 </a>
-                <a href={resumeUrl} download onClick={e => e.stopPropagation()}
+                <a href={resumeDownloadUrl} download onClick={e => e.stopPropagation()}
                   className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg
                     text-xs font-semibold text-white bg-gradient-to-r from-violet-600 to-pink-600
                     hover:opacity-90 transition-all duration-200">
@@ -86,6 +87,12 @@ export default function Hero() {
   const availNote = profile?.availabilityNote || 'Available for opportunities'
   const photoSrc  = profile?.profileImage     || profileImageFallback
   const resumeUrl = profile?.resumeUrl        || '/Gebremeskel_Kiflemeskel_CV.pdf'
+  const resumeDownloadUrl = profile?.resumeUrl
+    ? `${BASE_URL}/profile/resume/download`
+    : '/Gebremeskel_Kiflemeskel_CV.pdf'
+  const resumePreviewUrl = profile?.resumeUrl
+    ? `${BASE_URL}/profile/resume/preview`
+    : '/Gebremeskel_Kiflemeskel_CV.pdf'
 
   const socials = profile?.socials?.length
     ? profile.socials.map(s => ({ Icon: ICON_MAP[s.icon] || FaGithub, href: s.url, label: s.platform }))
@@ -211,9 +218,9 @@ export default function Hero() {
           </Button>
 
           {/* Download CV with preview tooltip */}
-          <CVPreviewTooltip resumeUrl={resumeUrl}>
+          <CVPreviewTooltip resumeUrl={resumeUrl} resumeDownloadUrl={resumeDownloadUrl} resumePreviewUrl={resumePreviewUrl}>
             <a
-              href={resumeUrl}
+              href={resumeDownloadUrl}
               download
               className={`inline-flex items-center gap-2 px-8 py-4 text-base font-semibold rounded-xl
                 transition-all duration-300 cursor-pointer whitespace-nowrap
