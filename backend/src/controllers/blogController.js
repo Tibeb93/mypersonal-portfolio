@@ -2,11 +2,16 @@ import Blog from '../models/Blog.js'
 import { sendSuccess, sendError, sendPaginated } from '../utils/apiResponse.js'
 import { uploadToCloudinary, deleteFromCloudinary } from '../utils/cloudinaryUpload.js'
 import { incrementBlogView } from '../middleware/analytics.js'
+import { cacheGet, cacheSet, cacheInvalidate } from '../utils/cache.js'
 
 // GET /api/blog  (public — published only)
 export const getBlogs = async (req, res) => {
   try {
     const { page = 1, limit = 10, category, tag, search, featured } = req.query
+    const cacheKey = `blog:${category || 'all'}:${tag || 'all'}:${featured || 'all'}:${page}:${limit}`
+    const cached = cacheGet(cacheKey)
+    if (cached) return res.json(cached)
+
     const filter = { status: 'published' }
 
     if (category)  filter.category = category
@@ -26,6 +31,8 @@ export const getBlogs = async (req, res) => {
       .skip((page - 1) * limit)
       .limit(Number(limit))
 
+    const response = { success: true, data: blogs, pagination: { total, page: Number(page), limit: Number(limit), pages: Math.ceil(total / limit) }, timestamp: new Date().toISOString() }
+    cacheSet(cacheKey, response, 60 * 1000)
     sendPaginated(res, blogs, total, page, limit)
   } catch (err) {
     sendError(res, err.message)
@@ -85,6 +92,8 @@ export const getBlogById = async (req, res) => {
 export const createBlog = async (req, res) => {
   try {
     const blog = await Blog.create({ ...req.body, author: req.user._id })
+    cacheInvalidate('blog')
+    if (global.io) global.io.emit('data:changed', { resource: 'blog' })
     sendSuccess(res, { blog }, 'Blog post created', 201)
   } catch (err) {
     sendError(res, err.message)
@@ -96,6 +105,8 @@ export const updateBlog = async (req, res) => {
   try {
     const blog = await Blog.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true })
     if (!blog) return sendError(res, 'Blog post not found.', 404)
+    cacheInvalidate('blog')
+    if (global.io) global.io.emit('data:changed', { resource: 'blog' })
     sendSuccess(res, { blog }, 'Blog post updated')
   } catch (err) {
     sendError(res, err.message)
@@ -109,6 +120,8 @@ export const deleteBlog = async (req, res) => {
     if (!blog) return sendError(res, 'Blog post not found.', 404)
     if (blog.coverPublicId) await deleteFromCloudinary(blog.coverPublicId).catch(() => {})
     await blog.deleteOne()
+    cacheInvalidate('blog')
+    if (global.io) global.io.emit('data:changed', { resource: 'blog' })
     sendSuccess(res, {}, 'Blog post deleted')
   } catch (err) {
     sendError(res, err.message)
@@ -129,6 +142,8 @@ export const uploadCoverImage = async (req, res) => {
     blog.coverPublicId = result.public_id
     await blog.save()
 
+    cacheInvalidate('blog')
+    if (global.io) global.io.emit('data:changed', { resource: 'blog' })
     sendSuccess(res, { url: result.secure_url, blog }, 'Cover image uploaded')
   } catch (err) {
     sendError(res, err.message)

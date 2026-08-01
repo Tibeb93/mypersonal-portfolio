@@ -14,7 +14,7 @@ const queryClient = new QueryClient({
       retry:      2,
       refetchOnWindowFocus:      true,
       refetchOnReconnect:        true,
-      refetchInterval:           30 * 1000,
+      refetchInterval:           false, // Real-time via Socket.IO, no polling needed
       refetchIntervalInBackground: false,
     },
   },

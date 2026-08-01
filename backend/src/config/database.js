@@ -1,22 +1,22 @@
 import mongoose from 'mongoose'
-import { setServers, setDefaultResultOrder } from 'dns'
+import { setDefaultResultOrder } from 'dns'
 import logger from '../utils/logger.js'
 
 // ── DNS Fix ───────────────────────────────────────────────────────────────────
-// Node.js defaults to 127.0.0.1 which has no DNS server running.
-// Use the WiFi DNS server which is confirmed to work.
-// In production (Render) this is not needed — Render has full DNS.
-if (process.env.NODE_ENV !== 'production') {
-  setServers(['10.21.71.244']) // WiFi DNS — only one that works for SRV queries
-  setDefaultResultOrder('ipv4first')
-}
+// Use IPv4 first for better compatibility with MongoDB Atlas SRV connections.
+// No hardcoded DNS servers — uses system defaults which work everywhere.
+setDefaultResultOrder('ipv4first')
 
 const OPTIONS = {
-  serverSelectionTimeoutMS: 30000,
-  connectTimeoutMS:         30000,
-  socketTimeoutMS:          45000,
+  serverSelectionTimeoutMS: 15000,
+  connectTimeoutMS:         10000,
+  socketTimeoutMS:          30000,
   family:                   4,
-  maxPoolSize:              10,
+  maxPoolSize:              15,
+  minPoolSize:              2,
+  maxIdleTimeMS:            30000,
+  retryWrites:              true,
+  retryReads:               true,
 }
 
 let isConnected = false
@@ -31,12 +31,13 @@ const connectDB = async () => {
       logger.info(`MongoDB connected: ${mongoose.connection.host}`)
     } catch (err) {
       logger.error(`MongoDB attempt ${count} failed: ${err.message}`)
-      if (isProd) {
-        logger.error('Exiting for Render restart.')
+      if (isProd && count >= 5) {
+        logger.error('Exiting for Render restart after 5 attempts.')
         process.exit(1)
       }
-      logger.warn(`Retry in 10s...`)
-      setTimeout(() => attempt(count + 1), 10000)
+      const delay = Math.min(5000 * count, 30000)
+      logger.warn(`Retry in ${delay / 1000}s...`)
+      setTimeout(() => attempt(count + 1), delay)
     }
   }
 

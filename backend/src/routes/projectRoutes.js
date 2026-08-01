@@ -7,6 +7,7 @@ import {
   updateProject,
   deleteProject,
   uploadThumbnail,
+  uploadCoverImage,
   addScreenshot,
   deleteScreenshot,
   reorderProjects,
@@ -38,6 +39,13 @@ router.post(
   handleMulterError,
   audit('UPLOAD', 'projects'),
   uploadThumbnail
+)
+router.post(
+  '/:id/cover',
+  uploadImage.single('coverImage'),
+  handleMulterError,
+  audit('UPLOAD', 'projects'),
+  uploadCoverImage
 )
 router.post(
   '/:id/screenshots',

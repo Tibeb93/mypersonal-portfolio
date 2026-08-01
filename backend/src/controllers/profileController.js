@@ -2,12 +2,19 @@ import https from 'https'
 import Profile from '../models/Profile.js'
 import { sendSuccess, sendError } from '../utils/apiResponse.js'
 import { uploadToCloudinary, deleteFromCloudinary } from '../utils/cloudinaryUpload.js'
+import { cacheGet, cacheSet, cacheInvalidate } from '../utils/cache.js'
 
 // GET /api/profile  (public)
 export const getProfile = async (req, res) => {
   try {
+    const cached = cacheGet('profile')
+    if (cached) return res.json(cached)
+
     let profile = await Profile.findOne()
     if (!profile) return sendError(res, 'Profile not found.', 404)
+
+    const response = { success: true, data: { profile }, timestamp: new Date().toISOString() }
+    cacheSet('profile', response, 120 * 1000)
     sendSuccess(res, { profile })
   } catch (err) {
     sendError(res, err.message)
@@ -24,6 +31,8 @@ export const updateProfile = async (req, res) => {
       Object.assign(profile, req.body)
       await profile.save()
     }
+    cacheInvalidate('profile')
+    if (global.io) global.io.emit('data:changed', { resource: 'profile' })
     sendSuccess(res, { profile }, 'Profile updated successfully')
   } catch (err) {
     sendError(res, err.message)
@@ -50,6 +59,8 @@ export const uploadProfileImage = async (req, res) => {
       { new: true, upsert: true }
     )
 
+    cacheInvalidate('profile')
+    if (global.io) global.io.emit('data:changed', { resource: 'profile' })
     sendSuccess(res, { url: result.secure_url, profile: updated }, 'Image uploaded successfully')
   } catch (err) {
     sendError(res, err.message)
@@ -75,6 +86,7 @@ export const uploadResume = async (req, res) => {
       { upsert: true }
     )
 
+    cacheInvalidate('profile')
     sendSuccess(res, { url: result.secure_url }, 'Resume uploaded successfully')
   } catch (err) {
     sendError(res, err.message)

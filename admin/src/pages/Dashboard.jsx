@@ -6,6 +6,7 @@ import {
 import {
   HiViewGrid, HiDocumentText, HiMail, HiEye,
   HiLightningBolt, HiBriefcase, HiChartBar,
+  HiGlobe, HiDesktopComputer, HiDeviceMobile,
 } from 'react-icons/hi'
 import StatCard from '../components/StatCard.jsx'
 import PageHeader from '../components/PageHeader.jsx'
@@ -53,10 +54,17 @@ export default function Dashboard() {
     staleTime: 5 * 60 * 1000,
   })
 
+  const { data: recentVisitors } = useQuery({
+    queryKey: ['analytics-recent-visitors'],
+    queryFn:  () => analyticsAPI.recentVisitors(20),
+    staleTime: 60 * 1000,
+  })
+
   const stats = overview?.data || {}
   const visitorData = visitors?.data?.stats || []
   const contactData = contactActivity?.data?.activity || []
   const topProjects = projectStats?.data?.projects || []
+  const visitorLogs = recentVisitors?.data?.visitors || []
 
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
@@ -140,7 +148,7 @@ export default function Dashboard() {
 
       {/* Top projects */}
       {topProjects.length > 0 && (
-        <div className="card p-5">
+        <div className="card p-5 mb-6">
           <h3 className="text-sm font-semibold text-white mb-4">Most Viewed Projects</h3>
           <div className="space-y-3">
             {topProjects.map((p) => (
@@ -161,6 +169,76 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* Recent Visitors */}
+      <div className="card p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-sm font-semibold text-white">Recent Visitors</h3>
+            <p className="text-xs text-slate-500 mt-0.5">Who viewed your portfolio, from where, and when</p>
+          </div>
+          <span className="text-xs text-slate-500">Last 20 visits</span>
+        </div>
+        {visitorLogs.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs text-slate-500 border-b border-white/5">
+                  <th className="pb-2 font-medium">Visitor</th>
+                  <th className="pb-2 font-medium">Page Viewed</th>
+                  <th className="pb-2 font-medium">Browser</th>
+                  <th className="pb-2 font-medium">OS</th>
+                  <th className="pb-2 font-medium">Device</th>
+                  <th className="pb-2 font-medium">Referrer</th>
+                  <th className="pb-2 font-medium text-right">When</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {visitorLogs.map((v) => (
+                  <tr key={v._id} className="hover:bg-white/[0.02] transition-colors">
+                    <td className="py-2.5">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-violet-500/10 flex items-center justify-center flex-shrink-0">
+                          {v.device === 'Mobile' ? <HiDeviceMobile size={13} className="text-violet-400" /> : <HiDesktopComputer size={13} className="text-violet-400" />}
+                        </div>
+                        <span className="text-xs text-slate-400 font-mono truncate max-w-[120px]" title={v.ip}>{v.ip}</span>
+                      </div>
+                    </td>
+                    <td className="py-2.5">
+                      <span className="text-xs text-white font-medium">/{v.page}</span>
+                    </td>
+                    <td className="py-2.5">
+                      <span className="text-xs text-slate-300">{v.browser}{v.browserVersion ? ` ${v.browserVersion}` : ''}</span>
+                    </td>
+                    <td className="py-2.5">
+                      <span className="text-xs text-slate-400">{v.os}</span>
+                    </td>
+                    <td className="py-2.5">
+                      <span className={`text-xs px-1.5 py-0.5 rounded ${v.device === 'Mobile' ? 'bg-orange-500/10 text-orange-400' : 'bg-cyan-500/10 text-cyan-400'}`}>
+                        {v.device}
+                      </span>
+                    </td>
+                    <td className="py-2.5">
+                      {v.referrer ? (
+                        <span className="text-xs text-emerald-400 truncate max-w-[100px] block" title={v.referrer}>{v.referrer}</span>
+                      ) : (
+                        <span className="text-xs text-slate-600">Direct</span>
+                      )}
+                    </td>
+                    <td className="py-2.5 text-right">
+                      <span className="text-xs text-slate-500">{new Date(v.timestamp).toLocaleString()}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="text-center py-8 text-slate-600 text-sm">
+            No visitor data yet — visitors will appear here once your portfolio gets traffic.
+          </div>
+        )}
+      </div>
     </div>
   )
 }

@@ -1,9 +1,15 @@
 import Skill from '../models/Skill.js'
 import { sendSuccess, sendError } from '../utils/apiResponse.js'
+import { cacheGet, cacheSet, cacheInvalidate } from '../utils/cache.js'
 
 // GET /api/skills  (public)
 export const getSkills = async (req, res) => {
   try {
+    const category = req.query.category || 'all'
+    const cacheKey = `skills:${category}`
+    const cached = cacheGet(cacheKey)
+    if (cached) return res.json(cached)
+
     const filter = { visible: true }
     if (req.query.category) filter.category = req.query.category
 
@@ -16,6 +22,8 @@ export const getSkills = async (req, res) => {
       return acc
     }, {})
 
+    const response = { success: true, data: { skills, grouped }, timestamp: new Date().toISOString() }
+    cacheSet(cacheKey, response, 120 * 1000)
     sendSuccess(res, { skills, grouped })
   } catch (err) {
     sendError(res, err.message)
@@ -36,6 +44,8 @@ export const getAllSkills = async (req, res) => {
 export const createSkill = async (req, res) => {
   try {
     const skill = await Skill.create(req.body)
+    cacheInvalidate('skills')
+    if (global.io) global.io.emit('data:changed', { resource: 'skills' })
     sendSuccess(res, { skill }, 'Skill created', 201)
   } catch (err) {
     sendError(res, err.message)
@@ -47,6 +57,8 @@ export const updateSkill = async (req, res) => {
   try {
     const skill = await Skill.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true })
     if (!skill) return sendError(res, 'Skill not found.', 404)
+    cacheInvalidate('skills')
+    if (global.io) global.io.emit('data:changed', { resource: 'skills' })
     sendSuccess(res, { skill }, 'Skill updated')
   } catch (err) {
     sendError(res, err.message)
@@ -58,6 +70,8 @@ export const deleteSkill = async (req, res) => {
   try {
     const skill = await Skill.findByIdAndDelete(req.params.id)
     if (!skill) return sendError(res, 'Skill not found.', 404)
+    cacheInvalidate('skills')
+    if (global.io) global.io.emit('data:changed', { resource: 'skills' })
     sendSuccess(res, {}, 'Skill deleted')
   } catch (err) {
     sendError(res, err.message)
@@ -71,6 +85,8 @@ export const reorderSkills = async (req, res) => {
     await Promise.all(
       order.map(({ id, order: o }) => Skill.findByIdAndUpdate(id, { order: o }))
     )
+    cacheInvalidate('skills')
+    if (global.io) global.io.emit('data:changed', { resource: 'skills' })
     sendSuccess(res, {}, 'Skills reordered')
   } catch (err) {
     sendError(res, err.message)

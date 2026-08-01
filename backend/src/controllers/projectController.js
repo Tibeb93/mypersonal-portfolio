@@ -2,13 +2,18 @@ import Project from '../models/Project.js'
 import { sendSuccess, sendError, sendPaginated } from '../utils/apiResponse.js'
 import { uploadToCloudinary, deleteFromCloudinary } from '../utils/cloudinaryUpload.js'
 import { incrementProjectView } from '../middleware/analytics.js'
+import { cacheGet, cacheSet, cacheInvalidate } from '../utils/cache.js'
 
 // GET /api/projects  (public)
 export const getProjects = async (req, res) => {
   try {
     const { category, featured, page = 1, limit = 12 } = req.query
-    const filter = { visible: true }
+    const cacheKey = `projects:${category || 'all'}:${featured || 'all'}:${page}:${limit}`
 
+    const cached = cacheGet(cacheKey)
+    if (cached) return res.json(cached)
+
+    const filter = { visible: true }
     if (category) filter.category = category
     if (featured === 'true') filter.featured = true
 
@@ -18,6 +23,8 @@ export const getProjects = async (req, res) => {
       .skip((page - 1) * limit)
       .limit(Number(limit))
 
+    const response = { success: true, data: projects, pagination: { total, page: Number(page), limit: Number(limit), pages: Math.ceil(total / limit) }, timestamp: new Date().toISOString() }
+    cacheSet(cacheKey, response, 30 * 1000) // cache 30s
     sendPaginated(res, projects, total, page, limit)
   } catch (err) {
     sendError(res, err.message)
@@ -62,6 +69,8 @@ export const getAllProjects = async (req, res) => {
 export const createProject = async (req, res) => {
   try {
     const project = await Project.create(req.body)
+    cacheInvalidate('projects')
+    if (global.io) global.io.emit('data:changed', { resource: 'projects' })
     sendSuccess(res, { project }, 'Project created', 201)
   } catch (err) {
     sendError(res, err.message)
@@ -73,6 +82,8 @@ export const updateProject = async (req, res) => {
   try {
     const project = await Project.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true })
     if (!project) return sendError(res, 'Project not found.', 404)
+    cacheInvalidate('projects')
+    if (global.io) global.io.emit('data:changed', { resource: 'projects' })
     sendSuccess(res, { project }, 'Project updated')
   } catch (err) {
     sendError(res, err.message)
@@ -87,12 +98,15 @@ export const deleteProject = async (req, res) => {
 
     // Delete media from Cloudinary
     if (project.thumbnailPublicId) await deleteFromCloudinary(project.thumbnailPublicId).catch(() => {})
+    if (project.coverImagePublicId) await deleteFromCloudinary(project.coverImagePublicId).catch(() => {})
     if (project.demoVideoPublicId) await deleteFromCloudinary(project.demoVideoPublicId, 'video').catch(() => {})
     for (const s of project.screenshots) {
       if (s.publicId) await deleteFromCloudinary(s.publicId).catch(() => {})
     }
 
     await project.deleteOne()
+    cacheInvalidate('projects')
+    if (global.io) global.io.emit('data:changed', { resource: 'projects' })
     sendSuccess(res, {}, 'Project deleted')
   } catch (err) {
     sendError(res, err.message)
@@ -116,7 +130,34 @@ export const uploadThumbnail = async (req, res) => {
     project.thumbnailPublicId = result.public_id
     await project.save()
 
+    cacheInvalidate('projects')
+    if (global.io) global.io.emit('data:changed', { resource: 'projects' })
     sendSuccess(res, { url: result.secure_url, project }, 'Thumbnail uploaded')
+  } catch (err) {
+    sendError(res, err.message)
+  }
+}
+
+// POST /api/admin/projects/:id/cover  (admin)
+export const uploadCoverImage = async (req, res) => {
+  try {
+    if (!req.file) return sendError(res, 'No file uploaded.', 400)
+
+    const project = await Project.findById(req.params.id)
+    if (!project) return sendError(res, 'Project not found.', 404)
+
+    if (project.coverImagePublicId) {
+      await deleteFromCloudinary(project.coverImagePublicId).catch(() => {})
+    }
+
+    const result = await uploadToCloudinary(req.file.buffer, 'portfolio/projects/covers')
+    project.coverImage = result.secure_url
+    project.coverImagePublicId = result.public_id
+    await project.save()
+
+    cacheInvalidate('projects')
+    if (global.io) global.io.emit('data:changed', { resource: 'projects' })
+    sendSuccess(res, { url: result.secure_url, project }, 'Cover image uploaded')
   } catch (err) {
     sendError(res, err.message)
   }
@@ -138,6 +179,8 @@ export const addScreenshot = async (req, res) => {
     })
     await project.save()
 
+    cacheInvalidate('projects')
+    if (global.io) global.io.emit('data:changed', { resource: 'projects' })
     sendSuccess(res, { project }, 'Screenshot added')
   } catch (err) {
     sendError(res, err.message)
@@ -157,6 +200,8 @@ export const deleteScreenshot = async (req, res) => {
     project.screenshots.splice(idx, 1)
     await project.save()
 
+    cacheInvalidate('projects')
+    if (global.io) global.io.emit('data:changed', { resource: 'projects' })
     sendSuccess(res, { project }, 'Screenshot deleted')
   } catch (err) {
     sendError(res, err.message)
@@ -168,6 +213,8 @@ export const reorderProjects = async (req, res) => {
   try {
     const { order } = req.body
     await Promise.all(order.map(({ id, order: o }) => Project.findByIdAndUpdate(id, { order: o })))
+    cacheInvalidate('projects')
+    if (global.io) global.io.emit('data:changed', { resource: 'projects' })
     sendSuccess(res, {}, 'Projects reordered')
   } catch (err) {
     sendError(res, err.message)

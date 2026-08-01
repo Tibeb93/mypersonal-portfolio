@@ -1,10 +1,14 @@
 import Settings from '../models/Settings.js'
 import { sendSuccess, sendError } from '../utils/apiResponse.js'
 import { uploadToCloudinary, deleteFromCloudinary } from '../utils/cloudinaryUpload.js'
+import { cacheGet, cacheSet, cacheInvalidate } from '../utils/cache.js'
 
 // GET /api/settings  (public — safe fields only)
 export const getPublicSettings = async (req, res) => {
   try {
+    const cached = cacheGet('settings:public')
+    if (cached) return res.json(cached)
+
     let settings = await Settings.findOne().select(
       'siteTitle siteTagline logo favicon primaryColor accentColor ' +
       'footerText copyright contactEmail contactPhone contactAddress ' +
@@ -15,6 +19,8 @@ export const getPublicSettings = async (req, res) => {
       settings = await Settings.create({})
     }
 
+    const response = { success: true, data: { settings }, timestamp: new Date().toISOString() }
+    cacheSet('settings:public', response, 120 * 1000) // cache 2min
     sendSuccess(res, { settings })
   } catch (err) {
     sendError(res, err.message)
@@ -53,6 +59,8 @@ export const updateSettings = async (req, res) => {
       })
       await settings.save()
     }
+    cacheInvalidate('settings')
+    if (global.io) global.io.emit('data:changed', { resource: 'settings' })
     sendSuccess(res, { settings }, 'Settings updated successfully')
   } catch (err) {
     sendError(res, err.message)
@@ -78,6 +86,8 @@ export const uploadLogo = async (req, res) => {
       { new: true, upsert: true, setDefaultsOnInsert: true }
     )
 
+    cacheInvalidate('settings')
+    if (global.io) global.io.emit('data:changed', { resource: 'settings' })
     sendSuccess(res, { url: result.secure_url, settings }, 'Logo uploaded')
   } catch (err) {
     sendError(res, err.message)
@@ -102,6 +112,8 @@ export const uploadFavicon = async (req, res) => {
       { new: true, upsert: true, setDefaultsOnInsert: true }
     )
 
+    cacheInvalidate('settings')
+    if (global.io) global.io.emit('data:changed', { resource: 'settings' })
     sendSuccess(res, { url: result.secure_url, settings }, 'Favicon uploaded')
   } catch (err) {
     sendError(res, `Upload failed: ${err.message}`)

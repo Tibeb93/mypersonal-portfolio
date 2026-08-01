@@ -5,6 +5,7 @@ import ContactMessage from '../models/ContactMessage.js'
 import Skill from '../models/Skill.js'
 import Experience from '../models/Experience.js'
 import { sendSuccess, sendError } from '../utils/apiResponse.js'
+import { parseUserAgent, extractReferrerDomain } from '../utils/userAgent.js'
 
 // GET /api/admin/analytics/overview
 export const getOverview = async (req, res) => {
@@ -128,6 +129,137 @@ export const getContactActivity = async (req, res) => {
     ])
 
     sendSuccess(res, { activity, days })
+  } catch (err) {
+    sendError(res, err.message)
+  }
+}
+
+// GET /api/admin/analytics/recent-visitors?limit=50
+export const getRecentVisitors = async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit) || 50, 200)
+
+    const visitors = await PageView.find()
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean()
+
+    const enriched = visitors.map((v) => {
+      const ua = parseUserAgent(v.userAgent)
+      return {
+        _id: v._id,
+        page: v.page,
+        ip: v.ip || 'Unknown',
+        browser: ua.browser,
+        browserVersion: ua.browserVersion,
+        os: ua.os,
+        device: ua.device,
+        referrer: extractReferrerDomain(v.referrer),
+        sessionId: v.sessionId,
+        timestamp: v.createdAt,
+      }
+    })
+
+    sendSuccess(res, { visitors: enriched })
+  } catch (err) {
+    sendError(res, err.message)
+  }
+}
+
+// GET /api/admin/analytics/visitor-summary?days=30
+export const getVisitorSummary = async (req, res) => {
+  try {
+    const days = parseInt(req.query.days) || 30
+    const since = new Date()
+    since.setDate(since.getDate() - days)
+
+    const [totalVisits, uniqueIps, browsers, osStats, devices, referrers, hourlyTraffic] = await Promise.all([
+      PageView.countDocuments({ createdAt: { $gte: since } }),
+      PageView.distinct('ip', { createdAt: { $gte: since } }).then(ips => ips.filter(Boolean).length),
+      PageView.aggregate([
+        { $match: { createdAt: { $gte: since } } },
+        { $group: { _id: '$userAgent', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: 20 },
+      ]).then(results => {
+        const browserMap = {}
+        for (const r of results) {
+          const ua = parseUserAgent(r._id)
+          const key = ua.browser
+          browserMap[key] = (browserMap[key] || 0) + r.count
+        }
+        return Object.entries(browserMap)
+          .map(([name, count]) => ({ name, count }))
+          .sort((a, b) => b.count - a.count)
+      }),
+      PageView.aggregate([
+        { $match: { createdAt: { $gte: since } } },
+        { $group: { _id: '$userAgent', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: 20 },
+      ]).then(results => {
+        const osMap = {}
+        for (const r of results) {
+          const ua = parseUserAgent(r._id)
+          osMap[ua.os] = (osMap[ua.os] || 0) + r.count
+        }
+        return Object.entries(osMap)
+          .map(([name, count]) => ({ name, count }))
+          .sort((a, b) => b.count - a.count)
+      }),
+      PageView.aggregate([
+        { $match: { createdAt: { $gte: since } } },
+        { $group: { _id: '$userAgent', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: 20 },
+      ]).then(results => {
+        const deviceMap = {}
+        for (const r of results) {
+          const ua = parseUserAgent(r._id)
+          deviceMap[ua.device] = (deviceMap[ua.device] || 0) + r.count
+        }
+        return Object.entries(deviceMap)
+          .map(([name, count]) => ({ name, count }))
+          .sort((a, b) => b.count - a.count)
+      }),
+      PageView.aggregate([
+        { $match: { createdAt: { $gte: since }, referrer: { $ne: null } } },
+        { $project: { referrer: 1 } },
+        { $limit: 500 },
+      ]).then(results => {
+        const refMap = {}
+        for (const r of results) {
+          const domain = extractReferrerDomain(r.referrer)
+          if (domain) refMap[domain] = (refMap[domain] || 0) + 1
+        }
+        return Object.entries(refMap)
+          .map(([domain, count]) => ({ domain, count }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 10)
+      }),
+      PageView.aggregate([
+        { $match: { createdAt: { $gte: since } } },
+        {
+          $group: {
+            _id: { hour: { $hour: '$createdAt' } },
+            count: { $sum: 1 },
+          },
+        },
+        { $project: { hour: '$_id.hour', count: 1, _id: 0 } },
+        { $sort: { hour: 1 } },
+      ]),
+    ])
+
+    sendSuccess(res, {
+      totalVisits,
+      uniqueVisitors: uniqueIps,
+      browsers,
+      operatingSystems: osStats,
+      devices,
+      topReferrers: referrers,
+      hourlyTraffic,
+      days,
+    })
   } catch (err) {
     sendError(res, err.message)
   }

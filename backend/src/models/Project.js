@@ -18,6 +18,8 @@ const projectSchema = new mongoose.Schema(
     longDesc:     { type: String },
     thumbnail:    { type: String },
     thumbnailPublicId: { type: String },
+    coverImage:   { type: String },
+    coverImagePublicId: { type: String },
     screenshots:  [screenshotSchema],
     demoVideo:    { type: String },
     demoVideoPublicId: { type: String },

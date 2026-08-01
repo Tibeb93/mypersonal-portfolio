@@ -13,7 +13,7 @@ const CATS = ['fullstack','frontend','backend','web','mobile','api','other']
 const STATUSES = ['completed','in-progress','archived']
 const EMPTY = { title:'', description:'', longDesc:'', githubUrl:'', liveUrl:'', technologies:'', category:'fullstack', status:'completed', featured:false, visible:true, order:0 }
 
-function ProjectForm({ initial, onSave, onCancel, loading, projectId, onThumbnailUpload }) {
+function ProjectForm({ initial, onSave, onCancel, loading, projectId, onThumbnailUpload, onCoverUpload }) {
   const [form, setForm] = useState(
     initial ? { ...initial, technologies: (initial.technologies||[]).join(', ') } : EMPTY
   )
@@ -24,10 +24,16 @@ function ProjectForm({ initial, onSave, onCancel, loading, projectId, onThumbnai
       className="space-y-4">
 
       {projectId && (
-        <ImageUpload label="Project Thumbnail" value={form.thumbnail}
-          hint="Recommended: 1200×630px"
-          fieldName="thumbnail"
-          onUpload={onThumbnailUpload} />
+        <div className="grid grid-cols-2 gap-4">
+          <ImageUpload label="Project Thumbnail" value={form.thumbnail}
+            hint="Recommended: 1200×630px"
+            fieldName="thumbnail"
+            onUpload={onThumbnailUpload} />
+          <ImageUpload label="Cover Image" value={form.coverImage}
+            hint="Full-width banner for blog/detail views"
+            fieldName="coverImage"
+            onUpload={onCoverUpload} />
+        </div>
       )}
 
       <div>
@@ -148,6 +154,14 @@ export default function ProjectsManager() {
     return res?.data?.url
   }
 
+  const handleCoverUpload = async (formData) => {
+    const projectId = modal?.project?._id
+    if (!projectId) return
+    const res = await projectsAPI.uploadCover(projectId, formData)
+    qc.invalidateQueries(['admin-projects'])
+    return res?.data?.url
+  }
+
   return (
     <div>
       <PageHeader title="Projects Manager" description={`${pagination?.total || 0} total projects`}
@@ -234,6 +248,7 @@ export default function ProjectsManager() {
           loading={createMutation.isPending || updateMutation.isPending}
           onCancel={() => setModal(null)}
           onThumbnailUpload={handleThumbnailUpload}
+          onCoverUpload={handleCoverUpload}
           onSave={(data) => {
             if (modal === 'add') createMutation.mutate(data)
             else updateMutation.mutate({ id: modal.project._id, data })

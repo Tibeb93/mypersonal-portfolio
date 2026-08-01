@@ -35,6 +35,7 @@ export const projectsAPI = {
   delete:           (id)     => api.delete(`/admin/projects/${id}`),
   reorder:          (order)  => api.put('/admin/projects/reorder', { order }),
   uploadThumbnail:  (id, form) => api.post(`/admin/projects/${id}/thumbnail`,  form, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  uploadCover:      (id, form) => api.post(`/admin/projects/${id}/cover`,      form, { headers: { 'Content-Type': 'multipart/form-data' } }),
   addScreenshot:    (id, form) => api.post(`/admin/projects/${id}/screenshots`, form, { headers: { 'Content-Type': 'multipart/form-data' } }),
   deleteScreenshot: (id, publicId) => api.delete(`/admin/projects/${id}/screenshots/${publicId}`),
 }
@@ -110,11 +111,13 @@ export const aboutAPI = {
 
 // ── Analytics ─────────────────────────────────────────────────────────────
 export const analyticsAPI = {
-  overview:        ()       => api.get('/admin/analytics/overview'),
-  visitors:        (days)   => api.get('/admin/analytics/visitors',         { params: { days } }),
-  topPages:        ()       => api.get('/admin/analytics/top-pages'),
-  projectStats:    ()       => api.get('/admin/analytics/projects'),
-  contactActivity: (days)   => api.get('/admin/analytics/contact-activity', { params: { days } }),
+  overview:          ()       => api.get('/admin/analytics/overview'),
+  visitors:          (days)   => api.get('/admin/analytics/visitors',         { params: { days } }),
+  recentVisitors:    (limit)  => api.get('/admin/analytics/recent-visitors',  { params: { limit } }),
+  visitorSummary:    (days)   => api.get('/admin/analytics/visitor-summary',  { params: { days } }),
+  topPages:          ()       => api.get('/admin/analytics/top-pages'),
+  projectStats:      ()       => api.get('/admin/analytics/projects'),
+  contactActivity:   (days)   => api.get('/admin/analytics/contact-activity', { params: { days } }),
 }
 
 // ── Audit Log ─────────────────────────────────────────────────────────────

@@ -1,5 +1,7 @@
 import 'dotenv/config'
 import express from 'express'
+import { createServer } from 'http'
+import { Server } from 'socket.io'
 import cors from 'cors'
 import helmet from 'helmet'
 import morgan from 'morgan'
@@ -32,7 +34,44 @@ import aboutRoutes        from './routes/aboutRoutes.js'
 connectDB()
 
 const app  = express()
+const httpServer = createServer(app)
 const PORT = process.env.PORT || 5000
+
+// ── Socket.IO setup ──────────────────────────────────────────────────────────
+const parseOrigins = (val) =>
+  (val || '').split(',').map(s => s.trim()).filter(Boolean)
+
+const socketAllowedOrigins = [
+  ...(process.env.FRONTEND_URL ? parseOrigins(process.env.FRONTEND_URL) : ['http://localhost:5173']),
+  ...(process.env.ADMIN_URL    ? parseOrigins(process.env.ADMIN_URL)    : ['http://localhost:5174']),
+  'https://mypersonal-portfolio-lxjb.vercel.app',
+  'https://mypersonal-portfolio-1smv.vercel.app',
+  'https://mypersonal-portfolio-gm.vercel.app',
+]
+
+const io = new Server(httpServer, {
+  cors: {
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true)
+      if (origin.endsWith('.vercel.app')) return callback(null, true)
+      if (socketAllowedOrigins.includes(origin)) return callback(null, true)
+      callback(null, false)
+    },
+    methods: ['GET', 'POST'],
+    credentials: true,
+  },
+  transports: ['websocket', 'polling'],
+})
+
+io.on('connection', (socket) => {
+  logger.debug(`Socket connected: ${socket.id}`)
+  socket.on('disconnect', () => {
+    logger.debug(`Socket disconnected: ${socket.id}`)
+  })
+})
+
+// Make io available globally so controllers can emit events
+global.io = io
 
 // ── Security middleware ──────────────────────────────────────────────────────
 app.use(helmet({
@@ -40,14 +79,9 @@ app.use(helmet({
 }))
 
 // CORS — allow frontend + admin origins
-// Support comma-separated list of origins in ADMIN_URL
-const parseOrigins = (val) =>
-  (val || '').split(',').map(s => s.trim()).filter(Boolean)
-
 const allowedOrigins = [
   ...(process.env.FRONTEND_URL ? parseOrigins(process.env.FRONTEND_URL) : ['http://localhost:5173']),
   ...(process.env.ADMIN_URL    ? parseOrigins(process.env.ADMIN_URL)    : ['http://localhost:5174']),
-  // Always allow Vercel preview deployments for this project
   'https://mypersonal-portfolio-lxjb.vercel.app',
   'https://mypersonal-portfolio-1smv.vercel.app',
   'https://mypersonal-portfolio-gm.vercel.app',
@@ -143,9 +177,10 @@ app.use(notFound)
 app.use(errorHandler)
 
 // ── Start server ─────────────────────────────────────────────────────────────
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   logger.info(`🚀 Server running in ${process.env.NODE_ENV} mode on port ${PORT}`)
   logger.info(`📡 Health check: http://localhost:${PORT}/health`)
+  logger.info(`🔌 Socket.IO ready`)
 })
 
 // ── Graceful shutdown ─────────────────────────────────────────────────────────
